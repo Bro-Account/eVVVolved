@@ -1,0 +1,52 @@
+# Claude Code worktrees
+.claude/worktrees/
+
+# CMake build trees (out-of-source builds go to build/)
+/build/
+/build-*/
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+install_manifest.txt
+CPackConfig.cmake
+CPackSourceConfig.cmake
+_CPack_Packages/
+compile_commands.json
+
+# Downloaded third-party runtimes (scripts/fetch-firebird.sh, scripts/migrate-catalog.sh)
+/deps/
+
+# Release DMGs (scripts/release-macos.sh)
+/dist/
+
+# Build outputs
+*.o
+*.a
+*.dylib
+*.app/
+*.dmg
+
+# Local test catalogs (testdata/ext_drive_catalog.fb5.pristine.vvv: migrated real catalog, 3.78M files)
+/testdata/
+
+# Catalogs and backups made while testing (shipped VVV.fbk and vvv-struct-update.fdb stay tracked)
+*.vvv
+/*.fbk
+!/VVV.fbk
+
+# Windows build leftovers from upstream (Visual Studio, see svn:ignore)
+/CDCATALOG.FDB
+*.suo
+*.ncb
+*.user
+/vc_msw*/
+Debug/
+Release/
+
+# Editors and OS
+.DS_Store
+.idea/
+.vscode/
+*.swp
+*~
+claude.resume
