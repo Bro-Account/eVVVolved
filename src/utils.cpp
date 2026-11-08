@@ -28,7 +28,7 @@
 #include <wx/stdpaths.h>
 #include <wx/filename.h>
 #include <wx/filefn.h>
-
+#include <vector>
 #include <iostream>
 
 wxString CUtils::applicationName = wxT("VVV");
@@ -284,6 +284,84 @@ wxString CUtils::ConvertSecondsToTimeString( int seconds )
 	return sl;
 }
 
+void CUtils::PrepareImageForRescale( wxImage &img )
+{
+	if( !img.IsOk() || !img.HasMask() )
+		return;
+
+	const unsigned char mr = img.GetMaskRed();
+	const unsigned char mg = img.GetMaskGreen();
+	const unsigned char mb = img.GetMaskBlue();
+
+	const int w = img.GetWidth();
+	const int h = img.GetHeight();
+	const int n = w * h;
+
+	unsigned char* data = (unsigned char*) malloc( n * 3 );
+	unsigned char* alpha = (unsigned char*) malloc( n );
+	if( data == NULL || alpha == NULL ) {
+		free( data );
+		free( alpha );
+		return;
+	}
+	memcpy( data, img.GetData(), n * 3 );
+
+	std::vector<bool> filled( n, false );
+	for( int i = 0; i < n; i++ ) {
+		if( data[3*i] == mr && data[3*i+1] == mg && data[3*i+2] == mb ) {
+			// masked pixel: fully transparent, its RGB value is meaningless
+			alpha[i] = wxIMAGE_ALPHA_TRANSPARENT;
+		}
+		else {
+			alpha[i] = wxIMAGE_ALPHA_OPAQUE;
+			filled[i] = true;
+		}
+	}
+
+	// copy the icon colours into the transparent pixels, spreading them out
+	// from the neighborhood of the opaque ones, so that smooth rescaling
+	// blends real colours at the icon edges instead of the (often dark) mask
+	// colour, which made the scaled icons show black fringes
+	bool done = false;
+	for( int pass = 0; pass < 6 && !done; pass++ ) {
+		done = true;
+		for( int y = 0; y < h; y++ ) {
+			for( int x = 0; x < w; x++ ) {
+				const int i = y * w + x;
+				if( filled[i] )
+					continue;
+				int rr = 0, gg = 0, bb = 0, cnt = 0;
+				for( int dy = -1; dy <= 1; dy++ ) {
+					for( int dx = -1; dx <= 1; dx++ ) {
+						if( (dx == 0 && dy == 0) || (dy < 0 && y == 0) ||
+							(dy > 0 && y == h - 1) || (dx < 0 && x == 0) ||
+							(dx > 0 && x == w - 1) )
+							continue;
+						const int j = (y + dy) * w + (x + dx);
+						if( !filled[j] )
+							continue;
+						rr += data[3*j];
+						gg += data[3*j+1];
+						bb += data[3*j+2];
+						cnt++;
+					}
+				}
+				if( cnt > 0 ) {
+					data[3*i] = (unsigned char)(rr / cnt);
+					data[3*i+1] = (unsigned char)(gg / cnt);
+					data[3*i+2] = (unsigned char)(bb / cnt);
+					filled[i] = true;
+					done = false;
+				}
+			}
+		}
+	}
+
+	img.SetMask( false );
+	img.SetData( data );
+	img.SetAlpha( alpha );
+}
+
 wxIcon CUtils::GetIconForPane( const char *xpm[], const wxArtID &id, const wxSize& size )
 {
     wxIcon r;
@@ -313,6 +391,7 @@ wxIcon CUtils::GetIconForPane( const char *xpm[], const wxArtID &id, const wxSiz
         wxBitmap bmp( r );
         wxImage img = bmp.ConvertToImage();
         if( img.IsOk() ) {
+            CUtils::PrepareImageForRescale( img );
             img.Rescale( size.x, size.y, wxIMAGE_QUALITY_HIGH );
             wxIcon scaled;
             scaled.CopyFromBitmap( wxBitmap( img ) );

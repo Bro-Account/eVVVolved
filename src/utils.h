@@ -124,6 +124,12 @@ public:
     // add thousands separators to the input string that must reperesente an integer number
     static wxString AddThousandsSeparators( const wxString &s );
 
+    // prepares an image that still has the 1-bit mask of XPM artwork for
+    // high-quality rescaling: the mask is converted into a real alpha channel
+    // and the colours of opaque pixels are copied into the transparent ones so
+    // that scaling blends real colours at the edges instead of darkening them
+    static void PrepareImageForRescale( wxImage &img );
+
 private:
 	// name of the current application
 	static wxString applicationName;

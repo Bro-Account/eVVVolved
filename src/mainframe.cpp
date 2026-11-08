@@ -357,6 +357,10 @@ static wxBitmap ScaleToolbarBitmap( wxWindow* win, const wxBitmap& bmp )
     wxImage img = bmp.ConvertToImage();
     if( !img.IsOk() )
         return bmp;
+    // XPM artwork still has its 1-bit mask: turn it into a real alpha channel
+    // before scaling, otherwise the mask colour (usually black) shows as dark
+    // fringes around the icon.
+    CUtils::PrepareImageForRescale( img );
 
     const int w = img.GetWidth();
     const int h = img.GetHeight();
