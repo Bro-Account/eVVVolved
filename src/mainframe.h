@@ -175,6 +175,12 @@ public:
     /// wxEVT_COMMAND_MENU_SELECTED event handler for ID_FILE_RESTORE
     void OnFileRestoreClick( wxCommandEvent& event );
 
+    /// wxEVT_COMMAND_MENU_SELECTED event handler for ID_FILE_COMPACT
+    void OnFileCompactClick( wxCommandEvent& event );
+
+    /// wxEVT_UPDATE_UI event handler for ID_FILE_COMPACT
+    void OnFileCompactUpdate( wxUpdateUIEvent& event );
+
     /// wxEVT_COMMAND_MENU_SELECTED event handler for wxID_EXIT
     void OnEXITClick( wxCommandEvent& event );
 
@@ -342,6 +348,7 @@ public:
         ID_FILE_EXPORT = 10022,
         ID_FILE_BACKUP = 10025,
         ID_FILE_RESTORE = 10029,
+        ID_FILE_COMPACT = 10090,
         ID_ADD_VIRTUAL_FOLDER = 10036,
         ID_EDIT_RENAME = 10038,
         ID_EDIT_DELETE = 10039,

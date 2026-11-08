@@ -26,6 +26,10 @@ compile_commands.json
 *.app/
 *.dmg
 
+# Windows runtime staging folder produced by build.ps1 (contains the app,
+# wxWidgets DLLs and the Firebird 5 runtime)
+/run-x64/
+
 # Local test catalogs (testdata/ext_drive_catalog.fb5.pristine.vvv: migrated real catalog, 3.78M files)
 /testdata/
 

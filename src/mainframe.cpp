@@ -55,6 +55,7 @@
 ////@end includes
 
 #include "wx/textdlg.h"
+#include "wx/progdlg.h"
 #include "wx/math.h"
 #include "wx/display.h"
 #include "wx/filename.h"
@@ -71,6 +72,7 @@
 #include "vvv.h"
 #include "mainframe.h"
 #include "data_interface/data_error.h"
+#include "data_interface/firebird_db.h"
 #include "mytreeitemdata.h"
 #include "mylistitemdata.h"
 #include "object_description.h"
@@ -590,6 +592,8 @@ BEGIN_EVENT_TABLE( CMainFrame, wxFrame )
     EVT_MENU( ID_FILE_BACKUP, CMainFrame::OnFileBackupClick )
     EVT_UPDATE_UI( ID_FILE_BACKUP, CMainFrame::OnFileBackupUpdate )
     EVT_MENU( ID_FILE_RESTORE, CMainFrame::OnFileRestoreClick )
+    EVT_MENU( ID_FILE_COMPACT, CMainFrame::OnFileCompactClick )
+    EVT_UPDATE_UI( ID_FILE_COMPACT, CMainFrame::OnFileCompactUpdate )
     EVT_MENU( wxID_EXIT, CMainFrame::OnEXITClick )
     EVT_MENU( ID_ADD_VIRTUAL_FOLDER, CMainFrame::OnAddVirtualFolderClick )
     EVT_UPDATE_UI( ID_ADD_VIRTUAL_FOLDER, CMainFrame::OnAddVirtualFolderUpdate )
@@ -943,6 +947,7 @@ void CMainFrame::CreateControls()
     m_fileMenu->AppendSeparator();
     m_fileMenu->Append(ID_FILE_BACKUP, _("&Backup..."), wxEmptyString, wxITEM_NORMAL);
     m_fileMenu->Append(ID_FILE_RESTORE, _("&Restore..."), wxEmptyString, wxITEM_NORMAL);
+    m_fileMenu->Append(ID_FILE_COMPACT, _("&Compact Database..."), wxEmptyString, wxITEM_NORMAL);
     m_fileMenu->AppendSeparator();
     m_fileMenu->Append(wxID_EXIT, _("E&xit"), wxEmptyString, wxITEM_NORMAL);
     menuBar->Append(m_fileMenu, _("&File"));
@@ -4048,6 +4053,53 @@ wxString CMainFrame::ConvertOldCatalog( wxString fileName ) {
 }
 #endif
 
+// The Firebird restore service under Windows creates the database file with an
+// all-uppercase name: rename it back to the requested name via a temporary file.
+static void NormalizeRestoredFileName( wxString databaseFile )
+{
+#ifdef __WXMSW__
+	wxFileName fn(databaseFile);
+	wxString name = fn.GetFullName();
+	wxString path = fn.GetPath( wxPATH_GET_VOLUME | wxPATH_GET_SEPARATOR );
+	wxString ucDatabaseFile = path + name.Upper();
+	wxString tmpDatabaseFile = ucDatabaseFile + wxT("$$tmp$$");
+	if( wxFileExists(tmpDatabaseFile) )
+		wxRemoveFile( tmpDatabaseFile );
+	wxRenameFile( ucDatabaseFile, tmpDatabaseFile, false );
+	wxRenameFile( tmpDatabaseFile, databaseFile, false );
+#else
+	(void) databaseFile;
+#endif
+}
+
+// Tables whose row counts are compared between the original and the compacted
+// catalog during a database compaction.
+static const wxChar* CompactTables[] = {
+	wxT("VOLUMES"),
+	wxT("PATHS"),
+	wxT("FILES"),
+	wxT("FILES_AUDIO_METADATA"),
+	wxT("VIRTUAL_PATHS"),
+	wxT("VIRTUAL_FILES"),
+	wxT("SERVICE")
+};
+
+// counts the rows of a table; throws in case of errors
+static wxLongLong CompactCountRows( IBPP::Database& ibdb, const wxChar* table )
+{
+	IBPP::Transaction tr = IBPP::TransactionFactory( ibdb, IBPP::amRead );
+	tr->Start();
+	IBPP::Statement st = IBPP::StatementFactory( ibdb, tr );
+	wxString sql = wxString(wxT("select count(*) as N from ")) + table;
+	st->Prepare( CUtils::wx2std(sql) );
+	st->Execute();
+	st->Fetch();
+	int64_t n;
+	st->Get( "N", n );
+	tr->Commit();
+	return (wxLongLong) n;
+}
+
 wxString CMainFrame::RestoreDatabase( wxString caption, wxString backupName ) {
 
 	wxString databaseFile = wxEmptyString;
@@ -4100,19 +4152,7 @@ wxString CMainFrame::RestoreDatabase( wxString caption, wxString backupName ) {
 	CBaseDB::CreateFirebirdDatabaseOnDisk( serverName, userName, password, backupName, databaseFile );
 	
 	// since under Windows the restore process creates an all-uppercase file name, rename it to the original name
-#ifdef __WXMSW__
-	{
-		wxFileName fn(databaseFile);
-		wxString name = fn.GetFullName();
-		wxString path = fn.GetPath( wxPATH_GET_VOLUME | wxPATH_GET_SEPARATOR );
-		wxString ucDatabaseFile = path + name.Upper();
-		wxString tmpDatabaseFile = ucDatabaseFile + wxT("$$tmp$$");
-		if( wxFileExists(tmpDatabaseFile) )
-			wxRemoveFile( tmpDatabaseFile );
-		wxRenameFile( ucDatabaseFile, tmpDatabaseFile, false );
-		wxRenameFile( tmpDatabaseFile, databaseFile, false );
-	}
-#endif
+	NormalizeRestoredFileName( databaseFile );
 
 	return databaseFile;
 
@@ -4259,22 +4299,166 @@ void CMainFrame::OnFileRestoreClick( wxCommandEvent& WXUNUSED(event) )
 	CBaseDB::CreateFirebirdDatabaseOnDisk( serverName, userName, password, backupFile, databaseFile );
 
 	// since under Windows the restore process creates an all-uppercase file name, rename it to the original name
-#ifdef __WXMSW__
-	{
-		wxFileName fn(databaseFile);
-		wxString name = fn.GetFullName();
-		wxString path = fn.GetPath( wxPATH_GET_VOLUME | wxPATH_GET_SEPARATOR );
-		wxString ucDatabaseFile = path + name.Upper();
-		wxString tmpDatabaseFile = ucDatabaseFile + wxT("$$tmp$$");
-		if( wxFileExists(tmpDatabaseFile) )
-			wxRemoveFile( tmpDatabaseFile );
-		wxRenameFile( ucDatabaseFile, tmpDatabaseFile, false );
-		wxRenameFile( tmpDatabaseFile, databaseFile, false );
-	}
-#endif
+	NormalizeRestoredFileName( databaseFile );
 
 	CUtils::MsgInfo( _("Restore completed") );
 
+}
+
+/*!
+ * wxEVT_COMMAND_MENU_SELECTED event handler for ID_FILE_COMPACT
+ */
+
+// converts a file size into a compact human-readable string
+static wxString CompactHumanSize( wxULongLong size )
+{
+	double gb = size.ToDouble() / (1024.0 * 1024.0 * 1024.0);
+	double mb = size.ToDouble() / (1024.0 * 1024.0);
+	double kb = size.ToDouble() / 1024.0;
+	if( gb >= 1.0 ) return wxString::Format( wxT("%.2f GB"), gb );
+	if( mb >= 1.0 ) return wxString::Format( wxT("%.1f MB"), mb );
+	return wxString::Format( wxT("%.0f KB"), kb );
+}
+
+// rebuilds the currently open catalog with a backup/restore cycle:
+// the catalog is backed up, restored to a temp file, verified against the
+// original and swapped into place; the original is kept as a .bak backup
+void CMainFrame::OnFileCompactClick( wxCommandEvent& WXUNUSED(event) )
+{
+	if( DBConnectionData.connectToServer && !DBConnectionData.IsLocalhost() ) {
+		CUtils::MsgErr( _("Unable to compact.\n\nYou are connecting to a database server on another computer. You must execute this command on the server to be able to compact a catalog.") );
+		return;
+	}
+
+	CBaseDB *db = CBaseDB::GetDatabase();
+	if( db == NULL ) return;
+
+	wxString catalogName = db->GetDatabaseName();
+
+	// sizes and names of all the involved files
+	wxULongLong oldSize;
+	{
+		wxLogNull ln;
+		oldSize = wxFileName::GetSize( catalogName );
+	}
+	wxFileName catFn( catalogName );
+	wxString path = catFn.GetPath( wxPATH_GET_VOLUME | wxPATH_GET_SEPARATOR );
+	wxString baseName = catFn.GetName();
+	wxString sep = wxString(wxFileName::GetPathSeparator());
+	wxString bakFile = path + baseName + wxT(".pre-compact.bak");
+	wxString workDir = path + baseName + wxT("-compact-") + wxDateTime::Now().Format( wxT("%Y%m%d-%H%M%S") );
+
+	if( wxFileExists( bakFile ) ) {
+		CUtils::MsgErr( _("Unable to compact: a backup of a previous compaction is still present:\n\n") + bakFile + _("\n\nDelete or move that file, then repeat the command.") );
+		return;
+	}
+
+	wxProgressDialog pd( _("Compacting the catalog"), _("Backing up the catalog, please wait..."), 100, this, wxPD_APP_MODAL | wxPD_SMOOTH );
+
+	// state flags used on failure paths
+	bool dbClosed = false;			// the open catalog has been closed
+	bool originalRenamed = false;	// the original catalog has been renamed to bakFile
+
+	try {
+		if( !wxFileName::Mkdir( workDir ) )
+			throw wxString( _("Unable to create the temporary folder:\n\n") + workDir );
+
+		wxString serverName, userName, password;
+		DBConnectionData.GetConnectionData( serverName, userName, password );
+		wxString backupFile = workDir + sep + wxT("compact.fbk");
+		wxString tempFile = workDir + sep + baseName + wxT("-compact.vvv");
+
+		// backup the open catalog
+		pd.Pulse( _("Backing up the catalog, please wait...") );
+		CBaseDB::BackupFirebirdDatabase( serverName, userName, password, backupFile, catalogName );
+
+		// restore the backup into a temp file
+		pd.Pulse( _("Rebuilding the catalog, please wait...") );
+		CBaseDB::CreateFirebirdDatabaseOnDisk( serverName, userName, password, backupFile, tempFile );
+		NormalizeRestoredFileName( tempFile );
+
+		// verify that the rebuilt catalog contains the same data: compare the row counts of every table
+		pd.Pulse( _("Verifying the catalog, please wait...") );
+		IBPP::Database origDb = ((CFirebirdDB *) db)->GetIBPPDB();
+		IBPP::Database newDb = IBPP::DatabaseFactory( CUtils::wx2std(serverName), CUtils::wx2std(tempFile), CUtils::wx2std(userName), CUtils::wx2std(password) );
+		newDb->Connect();
+		wxString mismatch = wxEmptyString;
+		for( unsigned int i = 0; i < sizeof(CompactTables) / sizeof(CompactTables[0]); i++ ) {
+			wxLongLong n1 = CompactCountRows( origDb, CompactTables[i] );
+			wxLongLong n2 = CompactCountRows( newDb, CompactTables[i] );
+			if( n1 != n2 )
+				mismatch += wxString(wxT("\n    ")) + CompactTables[i] + wxT(": ") + n1.ToString() + wxT(" / ") + n2.ToString();
+		}
+		newDb->Disconnect();
+
+		if( !mismatch.empty() )
+			throw wxString( _("Compaction failed: the row counts of the rebuilt catalog do not match the original.") + mismatch );
+
+		// close the original: the catalog file must not be in use while we rename it
+		pd.Pulse( _("Closing the catalog, please wait...") );
+		db->Disconnect();
+		CBaseDB::DeleteFirebirdDatabase();
+		dbClosed = true;
+
+		// swap the files
+		if( !wxRenameFile( catalogName, bakFile, false ) )
+			throw wxString( wxString(_("Unable to rename the catalog file to:\n\n")) + bakFile + _("\n\nNothing has been removed: the catalog file is unchanged.") );
+		originalRenamed = true;
+
+		if( !wxRenameFile( tempFile, catalogName, false ) ) {
+			// put the original back in place
+			if( !wxRenameFile( bakFile, catalogName, false ) )
+				throw wxString( wxString(_("Unable to return the original catalog into place after a failed rename:\n\n")) + bakFile + _("\n\nPlease rename it by hand, then reopen the catalog.") );
+			originalRenamed = false;
+			throw wxString( wxString(_("Unable to rename the compacted catalog into place:\n\n")) + catalogName + _("\n\nThe original catalog has been left in place, unchanged.") );
+		}
+		originalRenamed = false;	// the compacted file is now the catalog
+
+		// reopen the catalog and rebuild the UI
+		pd.Pulse( _("Reopening the catalog, please wait...") );
+		OpenDatabase( catalogName, CUtils::GetExpectedDatabaseVersion() );
+
+		if( CBaseDB::GetDatabase() != NULL ) {
+			// the compacted catalog is open: the work folder is not needed anymore
+			wxRemoveFile( backupFile );
+			wxRemoveFile( tempFile );
+			if( !wxRmDir( workDir ) )
+				wxLogWarning( _("Unable to remove the temporary folder:\n\n") + workDir );
+
+			wxULongLong newSize;
+			{
+				wxLogNull ln;
+				newSize = wxFileName::GetSize( catalogName );
+			}
+			CUtils::MsgInfo( wxString(_("Compaction completed.\n\nOld catalog size: ")) + CompactHumanSize( oldSize ) + _("\nNew catalog size: ") + CompactHumanSize( newSize ) + _("\n\nThe pre-compaction catalog has been kept as:\n") + bakFile );
+		}
+		else {
+			// the reopen failed: tell the user where everything is, but do not remove the work folder
+			CUtils::MsgErr( wxString(_("The catalog has been compacted but the program was unable to reopen it.\n\nThe catalog is at:\n")) + catalogName + _("\n\nThe backup copy taken before the compaction is at:\n") + bakFile );
+		}
+	}
+	catch( wxString& msg ) {
+		CUtils::MsgErr( msg );
+	}
+	catch( IBPP::Exception& e ) {
+		// on failure put the original catalog back into place if we touched it
+		if( dbClosed ) {
+			if( originalRenamed )
+				wxRenameFile( bakFile, catalogName, false );
+			OpenDatabase( catalogName, CUtils::GetExpectedDatabaseVersion() );
+		}
+		CUtils::MsgErr( _("Compaction failed. The original catalog has been left in place, unchanged.\n\n") + wxString( e.what(), wxConvLocal ) );
+		return;
+	}
+}
+
+/*!
+ * wxEVT_UPDATE_UI event handler for ID_FILE_COMPACT
+ */
+
+void CMainFrame::OnFileCompactUpdate( wxUpdateUIEvent& event )
+{
+	event.Enable(CBaseDB::GetDatabase() != NULL);
 }
 
 /*!
