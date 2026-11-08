@@ -1,0 +1,60 @@
+{
+  "version": 3,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 21,
+    "patch": 0
+  },
+  "configurePresets": [
+    {
+      "name": "windows-x86",
+      "displayName": "Windows x86 (Win32, Release)",
+      "description": "32-bit build using the prebuilt wxWidgets 3.2.8 and TagLib 2.3.1 in ../deps.",
+      "generator": "Visual Studio 18 2026",
+      "architecture": "Win32",
+      "binaryDir": "${sourceDir}/../build-x86",
+      "cacheVariables": {
+        "CMAKE_CXX_STANDARD": "17",
+        "wxWidgets_ROOT_DIR": "${sourceDir}/../deps/wxWidgets-3.2.8-x86",
+        "wxWidgets_LIB_DIR": "${sourceDir}/../deps/wxWidgets-3.2.8-x86/lib/vc14x_dll",
+        "wxWidgets_CONFIGURATION": "mswu",
+        "wxWidgets_USE_REL_AND_DBG": "OFF",
+        "TAGLIB_INCLUDE_PATH": "${sourceDir}/../deps/taglib-install-x86/include/taglib",
+        "TAGLIB_LIB_PATH_DEBUG": "${sourceDir}/../deps/taglib-install-x86/lib/tag.lib",
+        "TAGLIB_LIB_PATH_RELEASE": "${sourceDir}/../deps/taglib-install-x86/lib/tag.lib"
+      }
+    },
+    {
+      "name": "windows-x64",
+      "displayName": "Windows x64 (Release)",
+      "description": "64-bit build using the prebuilt wxWidgets 3.2.8 and TagLib 2.3.1 in ../deps.",
+      "generator": "Visual Studio 18 2026",
+      "architecture": "x64",
+      "binaryDir": "${sourceDir}/../build-x64",
+      "cacheVariables": {
+        "CMAKE_CXX_STANDARD": "17",
+        "wxWidgets_ROOT_DIR": "${sourceDir}/../deps/wxWidgets-3.2.8-x64",
+        "wxWidgets_LIB_DIR": "${sourceDir}/../deps/wxWidgets-3.2.8-x64/lib/vc14x_x64_dll",
+        "wxWidgets_CONFIGURATION": "mswu",
+        "wxWidgets_USE_REL_AND_DBG": "OFF",
+        "TAGLIB_INCLUDE_PATH": "${sourceDir}/../deps/taglib-install-x64/include/taglib",
+        "TAGLIB_LIB_PATH_DEBUG": "${sourceDir}/../deps/taglib-install-x64/lib/tag.lib",
+        "TAGLIB_LIB_PATH_RELEASE": "${sourceDir}/../deps/taglib-install-x64/lib/tag.lib"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "windows-x86-release",
+      "displayName": "Build Windows x86 Release",
+      "configurePreset": "windows-x86",
+      "configuration": "Release"
+    },
+    {
+      "name": "windows-x64-release",
+      "displayName": "Build Windows x64 Release",
+      "configurePreset": "windows-x64",
+      "configuration": "Release"
+    }
+  ]
+}
