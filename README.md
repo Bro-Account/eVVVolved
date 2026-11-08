@@ -13,7 +13,7 @@ created by pre-2.0 versions must be converted once (see below).
 
 **Windows (the main platform here):**
 
-- Native x86 and x64 builds with CMake and Visual Studio.
+- Native 64-bit build with CMake and Visual Studio (32-bit was dropped with 2.0).
 - Per-monitor high-DPI support: the whole UI, toolbar and icons scale with the
   display; window and column layouts are stored DPI-independent.
 - Modernized toolchain: wxWidgets 3.2.8, TagLib 2.3, and the embedded
@@ -57,23 +57,22 @@ component (Visual Studio 18 2026 generator tested), Windows PowerShell 5.1.
 Populate a `deps/` folder next to (or one level above) this checkout:
 
 ```text
-deps\wxWidgets-3.2.8-x86     official wxWidgets 3.2.8 MSVC prebuilt DLLs (+ headers)
-deps\wxWidgets-3.2.8-x64
-deps\taglib-install-x86      TagLib 2.3.1 static build (lib\tag.lib + include\taglib)
-deps\taglib-install-x64
-deps\firebird-5.0.4-x86      Firebird 5.0.4 runtime for the embedded engine
-deps\firebird-5.0.4-x64
+deps\wxWidgets-3.2.8-x64     official wxWidgets 3.2.8 MSVC prebuilt DLLs (+ headers)
+deps\taglib-install-x64      TagLib 2.3.1 static build (lib\tag.lib + include\taglib)
+deps\firebird-5.0.4-x64      Firebird 5.0.4 runtime for the embedded engine
 ```
 
 Then from this repository root:
 
 ```powershell
-.\build.ps1 -Arch x64     # or x86, or -Arch all
+.\build.ps1
 ```
 
-The script configures, builds and stages `run-x86/` / `run-x64/` folders that
-contain the application, the wxWidgets DLLs and the Firebird 5 runtime —
-self-contained, runnable as-is. `build-<arch>/` holds the CMake build tree.
+The script configures, builds and stages a `run-x64/` folder that contains the
+application, the wxWidgets DLLs and the Firebird 5 runtime — self-contained,
+runnable as-is. `build-x64/` holds the CMake build tree.
+
+Windows builds are 64-bit only since VVV 2.0.
 
 ## Building on macOS
 

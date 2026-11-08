@@ -18,7 +18,7 @@
         run-<arch>\                          (app + wxWidgets + Firebird 5 + data files)
 
 .PARAMETER Arch
-    x86, x64, or all (default).
+    x64 (default). 32-bit builds were dropped with VVV 2.0.
 
 .PARAMETER Config
     Release (default) or Debug.
@@ -27,12 +27,12 @@
     Only build; do not create the run-<arch> folder.
 
 .EXAMPLE
-    .\build.ps1 -Arch all
+    .\build.ps1
 #>
 [CmdletBinding()]
 param(
-    [ValidateSet('x86', 'x64', 'all')]
-    [string]$Arch = 'all',
+    [ValidateSet('x64')]
+    [string]$Arch = 'x64',
 
     [ValidateSet('Release', 'Debug')]
     [string]$Config = 'Release',
