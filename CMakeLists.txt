@@ -19,6 +19,6 @@ set( CPACK_PACKAGE_VERSION_MINOR 5 )
 set( CPACK_PACKAGE_VERSION_PATCH 0 )
 # CPack builds CPACK_PACKAGE_VERSION from major/minor/patch only, so set the
 # full four-part version explicitly to match the application.
-set( CPACK_PACKAGE_VERSION "1.5.0.5" )
+set( CPACK_PACKAGE_VERSION "2.0.0.0" )
 set( CPACK_STRIP_FILES TRUE )
 include( CPack )

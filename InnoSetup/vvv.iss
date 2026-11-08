@@ -8,7 +8,7 @@
 
 #define AppName "VVV (Virtual Volumes View)"
 #define ExeName "vvv.exe"
-#define AppVersion "1.5"
+#define AppVersion "2.0"
 #define FirebirdEmbeddedPath "..\FB 2.1.4 embedded"
 
 [Setup]
@@ -23,7 +23,7 @@ VersionInfoVersion={#AppVersion}
 ChangesAssociations=yes
 OutputDir=.
 ;OutputBaseFilename=VVV- + {#AppVersion} + -Setup
-OutputBaseFilename=VVV-1.5.0.5-Setup
+OutputBaseFilename=VVV-2.0.0.0-Setup
 SignTool=signtool /d $qVVV (Virtual Volumes View)$q $f
 
 [Tasks]

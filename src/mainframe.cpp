@@ -2361,7 +2361,7 @@ void CMainFrame::OpenDatabase( wxString fileName, int expectedVersion ) {
 					break;
 				}
 #endif
-				CUtils::MsgErr( _("This catalog has been created with VVV 1.5 or older and must be converted before this version can open it:\n\n") + fileName + _("\n\nHow to convert it: https://github.com/svenvarkel/vvv#converting-catalogs-from-vvv-15-and-older\nThe original file is not modified.") );
+				CUtils::MsgErr( _("This catalog has been created with VVV 1.5 or older and must be converted before this version can open it:\n\n") + fileName + _("\n\nHow to convert it: https://github.com/Bro-Account/evvvolved\nThe original file is not modified.") );
 				errorOpeningDB = true;
 				break;
 			case CDataErrorException::ecServerNotFound:
@@ -2609,10 +2609,11 @@ void CMainFrame::OnABOUTClick( wxCommandEvent& WXUNUSED(event) )
 	info.SetVersion( CUtils::GetApplicationVersion() );
 	info.SetWebSite( wxT("https://www.fsoft.it/VVV/") );
 	info.SetDescription( _("VVV (Virtual Volumes View): a program to catalog removable devices like CDs and DVDs") );
-	info.SetCopyright( _("Copyright (C) 2007-2024 The VVV Team") );
+	info.SetCopyright( _("Copyright (C) 2007-2026 The VVV Team") );
 	info.AddDeveloper( _("Fulvio Senore: main developer") );
 	info.AddDeveloper( _("\nJan Albartus: worked at the portable version and designed the application's icon") );
 	info.AddDeveloper( wxT("\nSven Varkel <sven@wasabi.ee>: ") + _("Apple Silicon port") );
+	info.AddDeveloper( wxT("\nHannes R.: ") + _("Windows 64-bit continuation (VVV 2.0)") );
 	info.AddArtist( _("This program uses icons from the Gnome, Ubuntu and Crystal icons projects") );
 	info.SetLicence( _("This is open source software, distributed under the GNU GENERAL PUBLIC LICENSE") );
 	info.AddTranslator( wxT("Zihan Zhu: ") + _("Simplified Chinese") );
