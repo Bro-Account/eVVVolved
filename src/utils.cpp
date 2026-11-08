@@ -36,6 +36,7 @@ wxString CUtils::applicationVersion = wxT("1.5.0.5");
 int CUtils::expectedDatabaseVersion = 24;
 int CUtils::firstUnicodeDatabaseVersion = 14;
 wxString CUtils::strucUpdateDbName = wxT("vvv-struct-update.fdb");
+bool CUtils::commandLineMode = false;
 
 // will be changed to the correct value by the first function call
 wxChar CUtils::m_thousandsSeparator = 'x';
@@ -96,8 +97,16 @@ wxString CUtils::UTF162wx( const char *strUTF16 ) {
 
 
 void CUtils::MsgErr( wxString errMsg ){
+	if( commandLineMode ) {
+		MsgStderr( errMsg );
+		return;
+	}
 	wxMessageDialog dialog( NULL, errMsg, applicationName, wxOK|wxICON_ERROR );
 	dialog.ShowModal();
+}
+
+void CUtils::SetCommandLineMode( bool on ){
+	commandLineMode = on;
 }
 
 void CUtils::MsgStderr( wxString errMsg ){
@@ -278,13 +287,23 @@ wxString CUtils::ConvertSecondsToTimeString( int seconds )
 wxIcon CUtils::GetIconForPane( const char *xpm[], const wxArtID &id, const wxSize& size )
 {
     wxIcon r;
-    wxIcon icoProv = wxArtProvider::GetIcon( id, wxART_OTHER, size );
-    if( icoProv.IsOk() ) {
-    	r = icoProv;
+#ifdef __WXMSW__
+    // Prefer the application's own artwork (see GetBitmapForToolbar).
+    if( xpm != NULL ) {
+        wxIcon ico( xpm );
+        if( ico.IsOk() )
+            r = ico;
     }
-    else {
-	    wxIcon ico( xpm );
-	    r = ico;
+#endif
+    if( !r.IsOk() ) {
+        wxIcon icoProv = wxArtProvider::GetIcon( id, wxART_OTHER, size );
+        if( icoProv.IsOk() ) {
+            r = icoProv;
+        }
+    }
+    if( !r.IsOk() && xpm != NULL ) {
+        wxIcon ico( xpm );
+        r = ico;
     }
 
     // The art provider may ignore the requested size and the XPM fallbacks are

@@ -67,6 +67,7 @@
 #include "wx/textdlg.h"
 #include "wx/busyinfo.h"
 #include "wx/artprov.h"
+#include <string.h>
 #include "vvv.h"
 #include "mainframe.h"
 #include "data_interface/data_error.h"
@@ -85,13 +86,10 @@
 
 ////@begin XPM images
 #include "graphics/vvv32.xpm"
-#include "graphics/tlb_new.xpm"
-#include "graphics/tlb_open.xpm"
+#include "graphics/tlb_toolbar_png.inc"
 #include "graphics/tlb_catalog.inc"
-#include "graphics/tlb_up.xpm"
 #include "graphics/tlb_physical.xpm"
 #include "graphics/tlb_virtual.xpm"
-#include "graphics/tlb_search.xpm"
 ////@end XPM images
 
 #include "graphics/folder_closed.xpm"
@@ -344,9 +342,9 @@ int wxCALLBACK ListControlCompareFunction( wxIntPtr item1, wxIntPtr item2, wxInt
 	return retVal;
 }
 
-// Returns a toolbar bitmap scaled for the DPI of the given window. The stock
-// XPM/PNG resources are 16x16, so on a high-DPI display they would otherwise be
-// drawn much smaller than the toolbar text.
+// Scales a toolbar bitmap to the size used by the current display. The artwork
+// is scaled proportionally and centred on a transparent canvas so that it keeps
+// its aspect ratio and fills the button like in the original VVV releases.
 static wxBitmap ScaleToolbarBitmap( wxWindow* win, const wxBitmap& bmp )
 {
     if( !bmp.IsOk() )
@@ -360,22 +358,42 @@ static wxBitmap ScaleToolbarBitmap( wxWindow* win, const wxBitmap& bmp )
     if( !img.IsOk() )
         return bmp;
 
-    img.Rescale( target.x, target.y, wxIMAGE_QUALITY_HIGH );
-    return wxBitmap( img );
+    const int w = img.GetWidth();
+    const int h = img.GetHeight();
+    const double scale = wxMin( (double) target.x / w, (double) target.y / h );
+    const int sw = wxMax( 1, wxRound( w * scale ) );
+    const int sh = wxMax( 1, wxRound( h * scale ) );
+    img.Rescale( sw, sh, wxIMAGE_QUALITY_HIGH );
+
+    wxImage canvas( target.x, target.y );
+    canvas.InitAlpha();
+    memset( canvas.GetAlpha(), wxIMAGE_ALPHA_TRANSPARENT, target.x * target.y );
+    const int ox = ( target.x - sw ) / 2;
+    const int oy = ( target.y - sh ) / 2;
+    canvas.Paste( img, ox, oy );
+    return wxBitmap( canvas );
 }
 
-static wxBitmap GetBitmapForToolbar( const char *xpm[], const wxArtID &id, wxWindow* win )
+// Loads a toolbar bitmap from the artwork embedded in the executable. The 16px
+// artwork is used at 100% DPI, the 24px artwork matches the original VVV
+// toolbar at 150% DPI, and higher settings scale the 24px artwork up.
+static wxBitmap GetToolbarBitmap( const unsigned char* png16, size_t png16Size,
+                                  const unsigned char* png24, size_t png24Size,
+                                  wxWindow* win )
 {
-    wxBitmap r;
-    wxBitmap bmpProv = wxArtProvider::GetBitmap( id, wxART_TOOLBAR, win->FromDIP( wxSize(16, 16) ) );
-    if( bmpProv.IsOk() ) {
-        r = bmpProv;
+    const int target = win->FromDIP( 16 );
+    const unsigned char* data = png16;
+    size_t size = png16Size;
+    if( target > 16 && png24 != NULL ) {
+        data = png24;
+        size = png24Size;
     }
-    else {
-        wxBitmap bitmap( xpm );
-        r = bitmap;
-    }
-    return ScaleToolbarBitmap( win, r );
+
+    wxMemoryInputStream stream( data, size );
+    wxImage img( stream, wxBITMAP_TYPE_PNG );
+    if( !img.IsOk() )
+        return wxNullBitmap;
+    return ScaleToolbarBitmap( win, wxBitmap( img ) );
 }
 
 /*!
@@ -977,7 +995,11 @@ void CMainFrame::CreateControls()
     itemFrame1->SetMenuBar(menuBar);
 
     m_ToolbarCtrl = CreateToolBar( wxTB_FLAT|wxTB_HORIZONTAL|wxTB_TEXT, ID_TOOLBAR1 );
-    m_ToolbarCtrl->SetToolBitmapSize(FromDIP(wxSize(16, 16)));
+    // Note: deliberately not calling SetToolBitmapSize() here. wxToolBar only
+    // honours integer DPI scale factors for an explicitly requested bitmap
+    // size, so at 150% it would shrink the icons back to 16px. Without an
+    // explicit size it uses the size of the bitmaps we provide, which are
+    // already scaled correctly for the current display.
     wxBitmap itemtool3Bitmap(itemFrame1->GetBitmapResource(wxT("graphics/tlb_new.xpm")));
     wxBitmap itemtool3BitmapDisabled;
     m_ToolbarCtrl->AddTool(wxID_NEW, _("New"), itemtool3Bitmap, itemtool3BitmapDisabled, wxITEM_NORMAL, _("Create a new catalog"), wxEmptyString);
@@ -1138,11 +1160,13 @@ wxBitmap CMainFrame::GetBitmapResource( const wxString& name )
     wxBitmap bitmap;
     if (name == wxT("graphics/tlb_new.xpm"))
     {
-        return GetBitmapForToolbar( tlb_new_xpm, wxART_NEW, this );
+        return GetToolbarBitmap( tlb_new_16_png, sizeof(tlb_new_16_png),
+                                 tlb_new_24_png, sizeof(tlb_new_24_png), this );
     }
     else if (name == wxT("graphics/tlb_open.xpm"))
     {
-        return GetBitmapForToolbar( tlb_open_xpm, wxART_FILE_OPEN, this );
+        return GetToolbarBitmap( tlb_open_16_png, sizeof(tlb_open_16_png),
+                                 tlb_open_24_png, sizeof(tlb_open_24_png), this );
     }
     else if (name == wxT("graphics/tlb_catalog.png"))
     {
@@ -1151,7 +1175,8 @@ wxBitmap CMainFrame::GetBitmapResource( const wxString& name )
     }
     else if (name == wxT("graphics/tlb_up.xpm"))
     {
-        return GetBitmapForToolbar( tlb_up_xpm, wxART_GO_UP, this );
+        return GetToolbarBitmap( tlb_up_16_png, sizeof(tlb_up_16_png),
+                                 tlb_up_24_png, sizeof(tlb_up_24_png), this );
     }
     else if (name == wxT("graphics/tlb_physical.xpm"))
     {
@@ -1163,7 +1188,8 @@ wxBitmap CMainFrame::GetBitmapResource( const wxString& name )
     }
     else if (name == wxT("graphics/tlb_search.xpm"))
     {
-        return GetBitmapForToolbar( tlb_search_xpm, wxART_FIND, this );
+        return GetToolbarBitmap( tlb_search_16_png, sizeof(tlb_search_16_png),
+                                 tlb_search_24_png, sizeof(tlb_search_24_png), this );
     }
     return ScaleToolbarBitmap( this, bitmap );
 }
@@ -1219,6 +1245,11 @@ void CMainFrame::LoadTreeControl(void) {
 
 	// adds a root item that will not be visible
 	wxTreeItemId rootID = tctl->AddRoot( wxT("Root") );
+
+	// Nothing to list without a catalog: without this guard the loop below would
+	// never end because no query was started (eof stays false).
+	if( CBaseDB::GetDatabase() == NULL )
+		return;
 
 	CVolumes vol;
 	vol.DBStartQueryListVolumes();
@@ -1301,6 +1332,10 @@ void CMainFrame::LoadVirtualTreeControl(void) {
 
 	// adds a root item that will not be visible
 	wxTreeItemId rootID = tctl->AddRoot( wxT("Root") );
+
+	// see LoadTreeControl(): no catalog means no query, so no rows to list
+	if( CBaseDB::GetDatabase() == NULL )
+		return;
 
 	// appends subfolders
 	CVirtualPaths pth;

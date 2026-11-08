@@ -55,6 +55,10 @@ public:
 	// displays an error message
 	static void MsgErr( wxString errMsg );
 
+	// true when running a command-line update: MsgErr writes to stderr instead
+	// of showing a message box that a script could not dismiss
+	static void SetCommandLineMode( bool on );
+
 	// displays an error message to stderr if available, otherwise uses a message box
 	static void MsgStderr( wxString errMsg );
 
@@ -135,6 +139,9 @@ private:
 
 	// name of the database that contains the database changes from version to version
 	static wxString strucUpdateDbName;
+
+	// true when the program runs a command-line update
+	static bool commandLineMode;
 
     // set the thousands separators
     static void SetThousandsSeparators();

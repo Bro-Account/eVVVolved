@@ -250,6 +250,7 @@ bool CVvvApp::OnInit()
         // No GUI is shown in this mode: send log messages to stderr instead of
         // a message box, so scripts can see what went wrong.
         delete wxLog::SetActiveTarget( new wxLogStderr() );
+        CUtils::SetCommandLineMode( true );
 
         if( m_CatalogName.IsEmpty() ) {
             CUtils::MsgStderr( _("The command line asks for a volume update but the catalog name is missing") );
@@ -328,18 +329,28 @@ bool CVvvApp::OnInit()
 		else
 			s = _("An unexpected error has occurred. Here is a description of the error:\n\n");
 		s += CUtils::std2wx( e.what() );
-		wxLogError( wxT("%s"), s.c_str() );
+		// wxLogError has no visible target this early in the GUI startup, so the
+		// user would only see the program disappear. MsgErr shows a dialog (or
+		// writes to stderr in command-line mode).
+		CUtils::MsgErr( s );
 		return false;
 	}
 	catch( IBPP::Exception& e ) {
 		wxString s = _("An unexpected error has occurred. Here is a description of the error:\n\n");
 		s += CUtils::std2wx( e.ErrorMessage() );
-		wxLogError( wxT("%s"), s.c_str() );
+		CUtils::MsgErr( s );
 		return false;
 	}
 	catch( ... ) {
 		wxString s = _("An unexpected error has occurred. This application will be terminated");
-		wxLogError( wxT("%s"), s.c_str() );
+		CUtils::MsgErr( s );
+		return false;
+	}
+
+	if( m_CLIUpdate && CBaseDB::GetDatabase() == NULL ) {
+		// Opening the catalog failed (OpenDatabase already reported why). Without
+		// a database the update cannot run, so do not enter the main loop: a
+		// command-line caller would wait forever for the process to finish.
 		return false;
 	}
 

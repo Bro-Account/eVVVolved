@@ -23,7 +23,38 @@
 #include "firebird_db.h"
 #include "data_error.h"
 
+#include <wx/file.h>
+#include <wx/filename.h>
+
 using namespace IBPP;
+
+// Firebird 5 refuses to open a catalog created by VVV 1.5 or older (Firebird
+// 2.x, ODS 11). Its attach error does not always reach IBPP as a SQLException
+// (the attach can appear to succeed and the follow-up ODS probe then fails
+// with a LogicException), so inspect the database header page first. This keeps
+// the existing ecWrongODS handling and its "convert the catalog" message.
+static bool IsUnsupportedOldCatalog( const wxString& fileName )
+{
+	if( fileName.empty() || !wxFileName::FileExists( fileName ) )
+		return false;
+
+	wxFile file;
+	if( !file.Open( fileName, wxFile::read ) )
+		return false;
+
+	unsigned char header[20] = { 0 };
+	const ssize_t bytesRead = file.Read( header, sizeof(header) );
+	file.Close();
+	if( bytesRead != (ssize_t) sizeof(header) || header[0] != 1 )
+		return false;	// not a Firebird database header page
+
+	const unsigned int odsVersion = header[18] | ( (unsigned int) header[19] << 8 );
+	if( (odsVersion & 0x8000) == 0 )
+		return false;	// unknown format: let Firebird report the error
+
+	// ODS 11 is Firebird 2.x (VVV 1.5 and older); Firebird 3 uses ODS 12.
+	return ( odsVersion & 0xFF ) <= 11;
+}
 
 CFirebirdDB::CFirebirdDB( wxString serverName, wxString databaseName, wxString userName, wxString password )
 {
@@ -41,6 +72,13 @@ CFirebirdDB::~CFirebirdDB(void)
 }
 
 void CFirebirdDB::Connect(void) {
+	// A catalog created by VVV 1.5 or older cannot be opened by Firebird 5.
+	// Check the ODS version first so the user gets the "convert the catalog"
+	// message instead of an IBPP LogicException.
+	if( serverName.empty() && IsUnsupportedOldCatalog( databaseName ) ) {
+		throw CDataErrorException( wxT("This catalog uses an unsupported on-disk structure."), CDataErrorException::ecWrongODS );
+	}
+
 	try {
 		db->Connect();
 	}
