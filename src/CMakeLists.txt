@@ -28,6 +28,15 @@ elseif(APPLE)
   if( NOT TAGLIB_LIB )
     message( FATAL_ERROR "Unable to find TagLib" )
   endif( NOT TAGLIB_LIB )
+elseif(UNIX)
+  # Linux: use the distribution TagLib (shared since Debian 13 / libtag-dev 2.0; the
+  # original static libtag.a hunt predates distro packages)
+  find_library( TAGLIB_LIB tag PATHS /usr/lib /usr/local/lib )
+  if( NOT TAGLIB_LIB )
+    message( FATAL_ERROR "Unable to find TagLib" )
+  else( NOT TAGLIB_LIB )
+    message( STATUS "TagLib: " ${TAGLIB_LIB} )
+  endif( NOT TAGLIB_LIB )
 else(WIN32)
   find_library( TAGLIB_LIB libtag.a PATHS /usr/lib /usr/local/lib )
   if( NOT TAGLIB_LIB )
@@ -38,7 +47,7 @@ else(WIN32)
 endif(WIN32)
 
 include_directories( ${TAGLIB_INCLUDE_PATH} )
-if( NOT APPLE OR TAGLIB_LIB MATCHES "\\.a$" )   # the release build links deps/prefix/lib/libtag.a
+if( TAGLIB_LIB MATCHES "\\.a$" )   # only a static link needs the TAGLIB_STATIC macro
   add_definitions( -DTAGLIB_STATIC )
 endif()
 
@@ -153,9 +162,9 @@ if( APPLE )
   message( STATUS "Firebird interface: " ${FB_LIB} )
   target_link_libraries( vvv ${FB_LIB} )
 elseif( UNIX )
-  # link to the Firebird client library
-  # the last path is used for OS X where I have a local copy (not installed)
-  find_library( FB_LIB fbembed PATHS /usr/lib /usr/local/lib /opt/firebird/lib ${PROJECT_SOURCE_DIR}/firebird_runtime/firebird )
+  # modern Firebird (3+) has no separate fbembed library: the client library
+  # (libfbclient) runs the engine in-process when opening local databases
+  find_library( FB_LIB fbclient PATHS /usr/lib /usr/local/lib /opt/firebird/lib ${PROJECT_SOURCE_DIR}/firebird_runtime/firebird )
   if( NOT FB_LIB )
     message( FATAL_ERROR "Unable to find firebird interface" )
   else( NOT FB_LIB )
