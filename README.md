@@ -41,7 +41,10 @@ to the old one and never modifies the original.
   from the [Releases page](https://github.com/Bro-Account/evvvolved/releases)).
   It bundles every engine it needs — no installation and no network access.
   Drag an old catalog file onto `convert-old-catalog.cmd`, or run
-  `convert-old-catalog.cmd "D:\Catalogs\drives.vvv"`. It backs the old catalog
+  `convert-old-catalog.cmd "D:\Catalogs\drives.vvv"`. Multiple catalogs can be
+  converted in one run (several files or a wildcard like `"D:\Catalogs\*.vvv"`,
+  and several files can be dropped onto the .cmd) — one failing catalog does
+  not stop the others. It backs the old catalog
   up with a bundled Firebird 2.5 engine (reading the original — backup and
   verification never write to it, no byte-copy is made), restores the backup
   with Firebird 5 (ODS 13), and compares the row counts of every table before
