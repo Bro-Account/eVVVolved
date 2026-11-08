@@ -89,9 +89,6 @@ private:
 	// PathID: the ID of the current folder if we must update it
 	// FatherID: the ID of the folder that contains the current folder
 	void CatalogUpdateSingleFolderWindows( CBaseDB* db, wxString path, long VolumeID, CNullableLong PathID, CNullableLong& FatherID, CFiles* PathFile  );
-	// add a folder to the database
-	// called by CatalogSingleFolderWindows(), calls again CatalogSingleFolderWindows() recursively
-	void AddFolderToDBWindows( _tfinddata_t &c_file, wxString &path, CNullableLong &PathID, CBaseDB* db, long VolumeID );
 #endif
 
 	// add the PATH row in the database
