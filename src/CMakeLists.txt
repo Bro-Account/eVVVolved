@@ -162,9 +162,16 @@ if( APPLE )
   message( STATUS "Firebird interface: " ${FB_LIB} )
   target_link_libraries( vvv ${FB_LIB} )
 elseif( UNIX )
-  # modern Firebird (3+) has no separate fbembed library: the client library
-  # (libfbclient) runs the engine in-process when opening local databases
-  find_library( FB_LIB fbclient PATHS /usr/lib /usr/local/lib /opt/firebird/lib ${PROJECT_SOURCE_DIR}/firebird_runtime/firebird )
+  # Linux: prefer a Firebird 5 runtime staged in deps/ (the same pattern the
+  # Windows and macOS builds use). Modern Firebird (3+) has no separate fbembed
+  # library: the client library (libfbclient) runs the engine in-process when
+  # opening local databases, so the runtime folder only matters at run time
+  # (see linux_specific/vvv-start.sh).
+  set( VVV_FIREBIRD_ROOT "${PROJECT_SOURCE_DIR}/deps/firebird-5.0.4-arm64" CACHE PATH "Firebird runtime folder" )
+  find_library( FB_LIB fbclient PATHS ${VVV_FIREBIRD_ROOT}/lib NO_DEFAULT_PATH )
+  if( NOT FB_LIB )
+    find_library( FB_LIB fbclient PATHS /usr/lib /usr/local/lib /opt/firebird/lib ${PROJECT_SOURCE_DIR}/firebird_runtime/firebird )
+  endif()
   if( NOT FB_LIB )
     message( FATAL_ERROR "Unable to find firebird interface" )
   else( NOT FB_LIB )
@@ -201,8 +208,14 @@ if( APPLE )
 endif( APPLE )
 
 if( UNIX AND NOT APPLE )
-  # copy the Firebird runtime
-  install( DIRECTORY ${FB_EMBEDDED_PATH}/ DESTINATION . USE_SOURCE_PERMISSIONS )
+  if( FB_EMBEDDED_PATH )
+    # copy the legacy (Firebird 2) embedded runtime, if staged
+    install( DIRECTORY ${FB_EMBEDDED_PATH}/ DESTINATION . USE_SOURCE_PERMISSIONS )
+  endif()
+  if( VVV_FIREBIRD_ROOT )
+    # copy the Firebird 5 runtime into the folder linux_specific/vvv-start.sh expects
+    install( DIRECTORY ${VVV_FIREBIRD_ROOT}/ DESTINATION firebird USE_SOURCE_PERMISSIONS )
+  endif()
   # copy other files used only for the Linux version
   install( FILES ${PROJECT_SOURCE_DIR}/linux_specific/readme.txt 
                  ${PROJECT_SOURCE_DIR}/linux_specific/License.txt 
