@@ -1,23 +1,81 @@
-# VVV (Virtual Volumes View) for Apple Silicon
+# VVV (Virtual Volumes View) 2.0 — evvvolved
 
 VVV catalogs the content of removable volumes (external drives, CDs, DVDs) so you can
 browse and search them offline. Folders and files can also be arranged in a virtual
 file system that holds files from many volumes.
 
-This is a fork of [VVV](https://vvvapp.sourceforge.net) by Fulvio Senore and the VVV team.
-It builds and runs natively on arm64 macOS. The full upstream SVN history
-(`svn://svn.code.sf.net/p/vvvapp/code`) is kept in this repository.
+This is an independent continuation of [VVV](https://vvvapp.sourceforge.net) by
+Fulvio Senore and the VVV team. It started from the Apple Silicon fork by
+Sven Varkel and now focuses on Windows. The version 2.0 signals that catalogs
+created by pre-2.0 versions must be converted once (see below).
 
 ## What changed from VVV 1.5
 
-- Native arm64 build with wxWidgets 3.3 and TagLib 2 from Homebrew.
-- The embedded database moved from Firebird 2.1 (x86_64 only) to **Firebird 5**. The runtime is
-  bundled in `VVV.app/Contents/Resources/firebird`.
-- `VVV.app` is self-contained: the wxWidgets and TagLib dylibs are copied into the bundle,
-  and the bundle is signed ad-hoc.
-- Catalogs made by VVV 1.5 and older must be converted once (see below).
+**Windows (the main platform here):**
 
-## Build
+- Native x86 and x64 builds with CMake and Visual Studio.
+- Per-monitor high-DPI support: the whole UI, toolbar and icons scale with the
+  display; window and column layouts are stored DPI-independent.
+- Modernized toolchain: wxWidgets 3.2.8, TagLib 2.3, and the embedded
+  database engine moved from Firebird 2.1 to **Firebird 5**.
+- Old catalogs use the Firebird 2 on-disk format and are detected early: the
+  app shows conversion instructions instead of failing cryptically (also in
+  command-line mode, which reports to `stderr` and no longer hangs).
+- Scanning a folder reads it in one pass instead of one query per file, and
+  long paths (>260 characters) are supported.
+- Catalog structure version stayed at 24, so catalogs created with the
+  modernized app still have the same schema — only the on-disk format (ODS)
+  changed with the engine.
+
+**macOS (inherited from the Apple Silicon fork):**
+native arm64 build (wxWidgets 3.3, TagLib 2, Firebird 5 from Homebrew),
+self-contained `VVV.app`, old-catalog conversion inside the app.
+
+## Converting catalogs from VVV 1.5 and older
+
+Old catalogs use the Firebird 2 on-disk format (ODS 11), and Firebird 5 cannot
+open it. They must be converted once; the converter writes a new catalog next
+to the old one and never modifies the original.
+
+- **Windows:** use the self-contained `catalog-converter` folder (available
+  from the [Releases page](https://github.com/Bro-Account/evvvolved/releases)).
+  It bundles every engine it needs — no installation and no network access.
+  Drag an old catalog file onto `convert-old-catalog.cmd`, or run
+  `convert-old-catalog.cmd "D:\Catalogs\drives.vvv"`. It backs the old catalog
+  up with a bundled Firebird 2.5 engine, restores the backup with Firebird 5
+  (ODS 13), and compares the row counts of every table before keeping the
+  result.
+- **macOS:** the app converts it in place: open the old catalog, answer Yes and
+  pick a name for the new one (default `<name>-fb5.vvv`). From a source
+  checkout, `scripts/migrate-catalog.sh` does the same on the command line.
+
+## Building on Windows
+
+Requirements: Visual Studio 2022/2026 Build Tools with the C++ CMake tools
+component (Visual Studio 18 2026 generator tested), Windows PowerShell 5.1.
+
+Populate a `deps/` folder next to (or one level above) this checkout:
+
+```text
+deps\wxWidgets-3.2.8-x86     official wxWidgets 3.2.8 MSVC prebuilt DLLs (+ headers)
+deps\wxWidgets-3.2.8-x64
+deps\taglib-install-x86      TagLib 2.3.1 static build (lib\tag.lib + include\taglib)
+deps\taglib-install-x64
+deps\firebird-5.0.4-x86      Firebird 5.0.4 runtime for the embedded engine
+deps\firebird-5.0.4-x64
+```
+
+Then from this repository root:
+
+```powershell
+.\build.ps1 -Arch x64     # or x86, or -Arch all
+```
+
+The script configures, builds and stages `run-x86/` / `run-x64/` folders that
+contain the application, the wxWidgets DLLs and the Firebird 5 runtime —
+self-contained, runnable as-is. `build-<arch>/` holds the CMake build tree.
+
+## Building on macOS
 
 Requirements: macOS on Apple Silicon, Xcode command line tools, Homebrew.
 
@@ -29,91 +87,49 @@ cmake --build build -j
 cmake --install build                      # assembles and checks build/install/VVV.app
 ```
 
-`cmake --install` fails if any library in the bundle still points outside the bundle or macOS.
-
-The app is not notarized yet. On first launch, macOS may block it: open
-*System Settings → Privacy & Security* and choose *Open Anyway*, or run
-`xattr -dr com.apple.quarantine VVV.app`.
-
-## Release build (signed and notarized)
-
-Needs an Apple Developer ID. One-time setup:
-
-1. Create a **Developer ID Application** certificate (developer.apple.com or Xcode) and keep it in the keychain.
-2. Store notarization credentials in the keychain (asks for an app-specific password from appleid.apple.com):
-   `xcrun notarytool store-credentials vvv-notary --apple-id <apple id> --team-id <TEAMID>`
-
-Then:
-
-```bash
-VVV_SIGN_IDENTITY="Developer ID Application: <company> (<TEAMID>)" \
-VVV_NOTARY_PROFILE=vvv-notary scripts/release-macos.sh
-```
-
-It first builds static wxWidgets and TagLib for macOS 15 into `deps/prefix` (`scripts/build-deps-macos.sh`,
-about 3 minutes, once): Homebrew's bottles only run on the macOS they were built for. Then it builds from scratch
-in `build-release/arm64/`, signs every binary with the hardened runtime (no entitlements needed), checks that every
-binary is arm64 and needs at most macOS 15, packs `dist/VVV-<version>-arm64.dmg`, notarizes and staples it, and prints its SHA-256.
-
-`VVV_ARCH=x86_64` makes the Intel DMG the same way, cross-compiled on Apple silicon (`deps/prefix-x86_64`,
-`deps/fb5-x86_64`, `dist/VVV-<version>-x86_64.dmg`), but for macOS 12.7 Monterey and later, the floor of
-Firebird 5's own libraries. Its ICU 71 dylibs are marked 15.0 and let through untested. Keep the Mac unlocked while it runs: the
-notary profile is unreadable while the screen is locked.
-
-## Converting catalogs from VVV 1.5 and older
-
-Old catalogs use the Firebird 2 on-disk format (ODS 11), and Firebird 5 cannot open it.
-
-The app converts it: open the old catalog, answer Yes and pick a name for the new one
-(default `<name>-fb5.vvv` next to it). The first time it downloads VVV 1.5 from SourceForge (checked against its
-SHA-256) and keeps only its Firebird 2.1 engine in `~/Library/Application Support/VVV/fb21`. Then it opens the
-new catalog. That engine is x86_64: Intel Macs run it natively, Apple silicon needs Rosetta
-(`softwareupdate --install-rosetta --agree-to-license`, the app says so if it is missing). A catalog converted
-on an Intel Mac also opens on Apple silicon.
-
-The converter is `osx_specific/convert-old-catalog.sh`; from a source checkout:
-
-```bash
-scripts/migrate-catalog.sh ~/Catalogs/drives.vvv            # writes ~/Catalogs/drives-fb5.vvv
-scripts/migrate-catalog.sh ~/Catalogs/drives.vvv new.vvv    # or pick the name
-```
-
-The script downloads the VVV 1.5 DMG from SourceForge to get its Firebird 2.1 engine,
-which runs natively on Intel and under Rosetta on Apple silicon. It backs up the
-old catalog with that engine, restores the backup with Firebird 5, and compares the row
-counts of every table. The old engine only works on a copy (an APFS clone when possible), so the original
-file stays byte-identical. The target is never overwritten.
+`cmake --install` fails if any library in the bundle still points outside the
+bundle or macOS. The macOS release/signing workflow lives in
+`scripts/release-macos.sh`.
 
 ## Known issues
 
-- Search and cataloging a volume have not been tested through the GUI of this build yet.
-- The Firebird engine traps SIGTERM: it closes all database connections and leaves the app running,
-  so the next action fails with `Transaction::Start ... invalid database handle`. Quit with Cmd-Q
-  instead of `kill`.
+- Windows: the Inno Setup installer script (`InnoSetup/vvv.iss`) is still the
+  VVV 1.5 one and installs the obsolete Firebird 2.1 runtime; it needs a rework
+  for the Firebird 5 file set. Until then, run the staged `run-<arch>` folders.
+- macOS: search and cataloging a volume have not been tested through the GUI
+  of this build yet.
+- Catalog files only ever grow while the Firebird engine keeps pages allocated;
+  they do not shrink automatically when drives are deleted. See *Catalog file
+  size* below.
+
+## Catalog file size
+
+Like every Firebird database, a catalog grows while data is added; space is
+reused for new records but no pages are ever returned to the file system.
+Deleting drives does not shrink the file. The proven way to rebuild it at the
+optimal size is a backup/restore cycle — exactly what the old-catalog
+converter does (the large size reductions in testing came from that rebuild).
 
 ## Security notes
 
-Reviewed 2026-09-28 (Codex security review, findings verified).
-
-- The app opens no network ports and makes no network connections, unless you configure a remote
-  Firebird server in the options. It writes only catalog files, `~/Library/Preferences/VVV Preferences`
-  and Firebird lock files in `/tmp/firebird` (mode 0770, owner only).
-- Untrusted input reaches C/C++ parsers: audio tags of files on cataloged volumes (TagLib), and catalogs
-  (`.vvv`) someone else gives you (Firebird). Treat foreign catalogs and crafted media like any other
-  file you open with a native app.
-- Search terms and names are escaped before they go into SQL; no injection path was found.
-- The Firebird password in the preferences is only obfuscated. It means nothing for local catalogs,
-  but do not store a real password there if you connect to a remote Firebird server.
-- The bundled libraries (Firebird, wxWidgets, TagLib, image and compression libraries) are frozen at
-  build time: rebuild to pick up their security fixes.
-- Before giving the app to others: Developer ID signature with hardened runtime, notarization and
-  pinned dependency versions. The bundle identifier is `ee.wasabi.soft.vvv`.
+- The app opens no network ports and makes no network connections, unless you
+  configure a remote Firebird server in the options.
+- Untrusted input reaches C/C++ parsers: audio tags of files on cataloged
+  volumes (TagLib), and catalogs (`.vvv`) someone else gives you (Firebird).
+  Treat foreign catalogs and crafted media like any other file you open with a
+  native app.
+- Search terms and names are escaped before they go into SQL; no injection
+  path was found.
+- The Firebird password in the preferences is only obfuscated. It means
+  nothing for local catalogs, but do not store a real password there if you
+  connect to a remote Firebird server.
+- The bundled libraries (Firebird, wxWidgets, TagLib, image and compression
+  libraries) are frozen at build time: rebuild to pick up their security fixes.
 
 ## License
 
 Contributors are listed in [CONTRIBUTORS.md](CONTRIBUTORS.md).
 
-
-GPL v2 or later, see [COPYING](COPYING). Bundled components keep their own licenses:
-Firebird (IPL/IDPL, `Contents/Resources/firebird/License.txt`), IBPP (IBPP License,
-`src/ibpp/license.txt`), wxWidgets (wxWindows Library Licence), TagLib (LGPL 2.1 / MPL 1.1).
+GPL v2 or later, see [COPYING](COPYING). Bundled components keep their own
+licenses: Firebird (IPL/IDPL), IBPP (`src/ibpp/license.txt`), wxWidgets
+(wxWindows Library Licence), TagLib (LGPL 2.1 / MPL 1.1).

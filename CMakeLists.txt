@@ -14,8 +14,8 @@ add_subdirectory( src )
 
 # Keep these in sync with CUtils::applicationVersion (src/utils.cpp) and the
 # version resource in src/vvv.rc.
-set( CPACK_PACKAGE_VERSION_MAJOR 1 )
-set( CPACK_PACKAGE_VERSION_MINOR 5 )
+set( CPACK_PACKAGE_VERSION_MAJOR 2 )
+set( CPACK_PACKAGE_VERSION_MINOR 0 )
 set( CPACK_PACKAGE_VERSION_PATCH 0 )
 # CPack builds CPACK_PACKAGE_VERSION from major/minor/patch only, so set the
 # full four-part version explicitly to match the application.
