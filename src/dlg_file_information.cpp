@@ -151,18 +151,18 @@ void CFileInformationDialog::CreateControls()
     wxBoxSizer* itemBoxSizer2 = new wxBoxSizer(wxVERTICAL);
     itemDialog1->SetSizer(itemBoxSizer2);
 
-    m_ListCtrl = new wxListCtrl( itemDialog1, ID_LISTCTRL, wxDefaultPosition, wxSize(100, 100), wxLC_REPORT|wxSUNKEN_BORDER );
-    itemBoxSizer2->Add(m_ListCtrl, 3, wxGROW|wxALL, 5);
+    m_ListCtrl = new wxListCtrl( itemDialog1, ID_LISTCTRL, wxDefaultPosition, wxSize(FromDIP(100), FromDIP(100)), wxLC_REPORT|wxSUNKEN_BORDER );
+    itemBoxSizer2->Add(m_ListCtrl, 3, wxGROW|wxALL, FromDIP(5));
 
     wxStaticText* itemStaticText4 = new wxStaticText( itemDialog1, wxID_STATIC, _("Description:"), wxDefaultPosition, wxDefaultSize, 0 );
-    itemBoxSizer2->Add(itemStaticText4, 0, wxALIGN_LEFT|wxALL, 5);
+    itemBoxSizer2->Add(itemStaticText4, 0, wxALIGN_LEFT|wxALL, FromDIP(5));
 
     m_TextCtrl = new wxTextCtrl( itemDialog1, ID_TEXTCTRL, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_MULTILINE );
-    itemBoxSizer2->Add(m_TextCtrl, 1, wxGROW|wxALL, 5);
+    itemBoxSizer2->Add(m_TextCtrl, 1, wxGROW|wxALL, FromDIP(5));
 
     wxStdDialogButtonSizer* itemStdDialogButtonSizer6 = new wxStdDialogButtonSizer;
 
-    itemBoxSizer2->Add(itemStdDialogButtonSizer6, 0, wxGROW|wxALL, 10);
+    itemBoxSizer2->Add(itemStdDialogButtonSizer6, 0, wxGROW|wxALL, FromDIP(10));
     wxButton* itemButton7 = new wxButton( itemDialog1, wxID_OK, _("&OK"), wxDefaultPosition, wxDefaultSize, 0 );
     itemStdDialogButtonSizer6->AddButton(itemButton7);
 
@@ -281,13 +281,13 @@ int CFileInformationDialog::AddLCRow( wxString col0, wxString col1 )
 
 void CFileInformationDialog::ResizeLCColumns() {
 	int x, y;
-	int firstColumnWidth = 120;
+	const int firstColumnWidth = FromDIP(120);
 
     if( m_ListCtrl == NULL ) return;
 
     m_ListCtrl->GetClientSize( &x, &y );
 	m_ListCtrl->SetColumnWidth( 0, firstColumnWidth );
-	m_ListCtrl->SetColumnWidth( 1, x - firstColumnWidth - 2 );
+	m_ListCtrl->SetColumnWidth( 1, x - firstColumnWidth - FromDIP(2) );
 }
 
 void CFileInformationDialog::SetDescription( const wxString& descr ) {

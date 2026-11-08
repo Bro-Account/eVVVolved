@@ -157,45 +157,45 @@ void CDialogOpenCatalog::CreateControls()
     itemDialog1->SetSizer(itemBoxSizer2);
 
     wxBoxSizer* itemBoxSizer3 = new wxBoxSizer(wxVERTICAL);
-    itemBoxSizer2->Add(itemBoxSizer3, 0, wxGROW|wxALL, 5);
+    itemBoxSizer2->Add(itemBoxSizer3, 0, wxGROW|wxALL, FromDIP(5));
 
     wxStaticText* itemStaticText4 = new wxStaticText( itemDialog1, wxID_STATIC, _("You are about to open a catalog located on the server.\n\nEnter the alias or the complete path to the catalog file.\nRemember that the path must be relative to the server, not to the client."), wxDefaultPosition, wxDefaultSize, 0 );
-    itemBoxSizer3->Add(itemStaticText4, 0, wxALIGN_LEFT|wxALL, 5);
+    itemBoxSizer3->Add(itemStaticText4, 0, wxALIGN_LEFT|wxALL, FromDIP(5));
 
-    itemBoxSizer3->Add(5, 5, 0, wxALIGN_CENTER_HORIZONTAL|wxALL, 5);
+    itemBoxSizer3->Add(FromDIP(5), FromDIP(5), 0, wxALIGN_CENTER_HORIZONTAL|wxALL, FromDIP(5));
 
     wxBoxSizer* itemBoxSizer6 = new wxBoxSizer(wxHORIZONTAL);
-    itemBoxSizer3->Add(itemBoxSizer6, 0, wxGROW|wxALL, 5);
+    itemBoxSizer3->Add(itemBoxSizer6, 0, wxGROW|wxALL, FromDIP(5));
 
     m_CatalogNameCtrl = new wxTextCtrl( itemDialog1, ID_OPENDIALOG_CATALOG_NAME, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
-    itemBoxSizer6->Add(m_CatalogNameCtrl, 1, wxALIGN_CENTER_VERTICAL|wxALL, 5);
+    itemBoxSizer6->Add(m_CatalogNameCtrl, 1, wxALIGN_CENTER_VERTICAL|wxALL, FromDIP(5));
 
     m_BrowseCtrl = new wxButton( itemDialog1, ID_OPENDIALOG_BROWSE, _("..."), wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT );
-    itemBoxSizer6->Add(m_BrowseCtrl, 0, wxALIGN_CENTER_VERTICAL|wxRIGHT|wxTOP|wxBOTTOM, 5);
+    itemBoxSizer6->Add(m_BrowseCtrl, 0, wxALIGN_CENTER_VERTICAL|wxRIGHT|wxTOP|wxBOTTOM, FromDIP(5));
 
 #if defined(__WXMSW__)
     wxBoxSizer* itemBoxSizer9 = new wxBoxSizer(wxHORIZONTAL);
-    itemBoxSizer3->Add(itemBoxSizer9, 0, wxALIGN_RIGHT|wxALL, 5);
+    itemBoxSizer3->Add(itemBoxSizer9, 0, wxALIGN_RIGHT|wxALL, FromDIP(5));
 
     wxButton* itemButton10 = new wxButton( itemDialog1, wxID_OK, _("&OK"), wxDefaultPosition, wxDefaultSize, 0 );
     itemButton10->SetDefault();
-    itemBoxSizer9->Add(itemButton10, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5);
+    itemBoxSizer9->Add(itemButton10, 0, wxALIGN_CENTER_VERTICAL|wxALL, FromDIP(5));
 
     wxButton* itemButton11 = new wxButton( itemDialog1, wxID_CANCEL, _("&Cancel"), wxDefaultPosition, wxDefaultSize, 0 );
-    itemBoxSizer9->Add(itemButton11, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5);
+    itemBoxSizer9->Add(itemButton11, 0, wxALIGN_CENTER_VERTICAL|wxALL, FromDIP(5));
 
 #endif
 
 #if defined(__WXMAC__) || defined(__WXGTK__)
     wxBoxSizer* itemBoxSizer12 = new wxBoxSizer(wxHORIZONTAL);
-    itemBoxSizer3->Add(itemBoxSizer12, 0, wxALIGN_RIGHT|wxALL, 5);
+    itemBoxSizer3->Add(itemBoxSizer12, 0, wxALIGN_RIGHT|wxALL, FromDIP(5));
 
     wxButton* itemButton13 = new wxButton( itemDialog1, wxID_CANCEL, _("&Cancel"), wxDefaultPosition, wxDefaultSize, 0 );
-    itemBoxSizer12->Add(itemButton13, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5);
+    itemBoxSizer12->Add(itemButton13, 0, wxALIGN_CENTER_VERTICAL|wxALL, FromDIP(5));
 
     wxButton* itemButton14 = new wxButton( itemDialog1, wxID_OK, _("&OK"), wxDefaultPosition, wxDefaultSize, 0 );
     itemButton14->SetDefault();
-    itemBoxSizer12->Add(itemButton14, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5);
+    itemBoxSizer12->Add(itemButton14, 0, wxALIGN_CENTER_VERTICAL|wxALL, FromDIP(5));
 
 #endif
 

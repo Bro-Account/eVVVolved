@@ -176,43 +176,43 @@ void CDialogUpdateVolume::CreateControls()
     itemDialog1->SetSizer(itemBoxSizer2);
 
     wxStaticText* itemStaticText3 = new wxStaticText( itemDialog1, wxID_STATIC, _("You are about to update the following volume:"), wxDefaultPosition, wxDefaultSize, 0 );
-    itemBoxSizer2->Add(itemStaticText3, 0, wxALIGN_LEFT|wxALL, 5);
+    itemBoxSizer2->Add(itemStaticText3, 0, wxALIGN_LEFT|wxALL, FromDIP(5));
 
     m_VolumeNameStatic = new wxStaticText( itemDialog1, wxID_STATIC, _("VOLUME NAME"), wxDefaultPosition, wxDefaultSize, 0 );
-    itemBoxSizer2->Add(m_VolumeNameStatic, 0, wxALIGN_LEFT|wxALL, 5);
+    itemBoxSizer2->Add(m_VolumeNameStatic, 0, wxALIGN_LEFT|wxALL, FromDIP(5));
 
-    itemBoxSizer2->Add(5, 5, 0, wxALIGN_CENTER_HORIZONTAL|wxALL, 5);
+    itemBoxSizer2->Add(FromDIP(5), FromDIP(5), 0, wxALIGN_CENTER_HORIZONTAL|wxALL, FromDIP(5));
 
     wxStaticText* itemStaticText6 = new wxStaticText( itemDialog1, wxID_STATIC, _("Enter or select the path to volume to update"), wxDefaultPosition, wxDefaultSize, 0 );
     itemBoxSizer2->Add(itemStaticText6, 0, wxALIGN_LEFT|wxALL|wxADJUST_MINSIZE, 5);
 
     wxBoxSizer* itemBoxSizer7 = new wxBoxSizer(wxHORIZONTAL);
-    itemBoxSizer2->Add(itemBoxSizer7, 0, wxGROW|wxBOTTOM, 5);
+    itemBoxSizer2->Add(itemBoxSizer7, 0, wxGROW|wxBOTTOM, FromDIP(5));
 
     m_VolumePath = new wxTextCtrl( itemDialog1, ID_VOLUME_PATH, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
-    itemBoxSizer7->Add(m_VolumePath, 1, wxALIGN_CENTER_VERTICAL|wxALL, 5);
+    itemBoxSizer7->Add(m_VolumePath, 1, wxALIGN_CENTER_VERTICAL|wxALL, FromDIP(5));
 
     m_VolumeBrowse = new wxButton( itemDialog1, ID_VOLUME_BROWSE, _("..."), wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT );
-    itemBoxSizer7->Add(m_VolumeBrowse, 0, wxALIGN_CENTER_VERTICAL|wxRIGHT|wxTOP|wxBOTTOM, 5);
+    itemBoxSizer7->Add(m_VolumeBrowse, 0, wxALIGN_CENTER_VERTICAL|wxRIGHT|wxTOP|wxBOTTOM, FromDIP(5));
 
     wxBoxSizer* itemBoxSizer10 = new wxBoxSizer(wxHORIZONTAL);
-    itemBoxSizer2->Add(itemBoxSizer10, 0, wxGROW|wxTOP|wxBOTTOM, 5);
+    itemBoxSizer2->Add(itemBoxSizer10, 0, wxGROW|wxTOP|wxBOTTOM, FromDIP(5));
 
     m_HelpButton = new wxButton( itemDialog1, wxID_HELP, _("&Help"), wxDefaultPosition, wxDefaultSize, 0 );
-    itemBoxSizer10->Add(m_HelpButton, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5);
+    itemBoxSizer10->Add(m_HelpButton, 0, wxALIGN_CENTER_VERTICAL|wxALL, FromDIP(5));
 
-    itemBoxSizer10->Add(5, 5, 1, wxALIGN_CENTER_VERTICAL|wxALL, 5);
+    itemBoxSizer10->Add(FromDIP(5), FromDIP(5), 1, wxALIGN_CENTER_VERTICAL|wxALL, FromDIP(5));
 
     m_UpdateButton = new wxButton( itemDialog1, ID_BUTTON_UPDATE, _("Update"), wxDefaultPosition, wxDefaultSize, 0 );
-    itemBoxSizer10->Add(m_UpdateButton, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5);
+    itemBoxSizer10->Add(m_UpdateButton, 0, wxALIGN_CENTER_VERTICAL|wxALL, FromDIP(5));
 
     m_CloseButton = new wxButton( itemDialog1, wxID_CANCEL, _("&Close"), wxDefaultPosition, wxDefaultSize, 0 );
-    itemBoxSizer10->Add(m_CloseButton, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5);
+    itemBoxSizer10->Add(m_CloseButton, 0, wxALIGN_CENTER_VERTICAL|wxALL, FromDIP(5));
 
     m_CurrentFolder = new wxStaticText( itemDialog1, ID_CURRENT_FOLDER, _("Current folder"), wxDefaultPosition, wxDefaultSize, 0 );
     itemBoxSizer2->Add(m_CurrentFolder, 0, wxGROW|wxALL|wxADJUST_MINSIZE, 5);
 
-    itemBoxSizer2->Add(5, 5, 0, wxALIGN_CENTER_HORIZONTAL|wxALL, 5);
+    itemBoxSizer2->Add(FromDIP(5), FromDIP(5), 0, wxALIGN_CENTER_HORIZONTAL|wxALL, FromDIP(5));
 
 ////@end CDialogUpdateVolume content construction
 

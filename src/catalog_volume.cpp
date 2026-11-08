@@ -178,52 +178,52 @@ void CDialogCatalogVolume::CreateControls()
     itemBoxSizer2->Add(itemStaticText3, 0, wxALIGN_LEFT|wxALL|wxADJUST_MINSIZE, 5);
 
     wxBoxSizer* itemBoxSizer4 = new wxBoxSizer(wxHORIZONTAL);
-    itemBoxSizer2->Add(itemBoxSizer4, 0, wxGROW|wxBOTTOM, 5);
+    itemBoxSizer2->Add(itemBoxSizer4, 0, wxGROW|wxBOTTOM, FromDIP(5));
 
     m_VolumePath = new wxTextCtrl( itemDialog1, ID_VOLUME_PATH, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
-    itemBoxSizer4->Add(m_VolumePath, 1, wxALIGN_CENTER_VERTICAL|wxALL, 5);
+    itemBoxSizer4->Add(m_VolumePath, 1, wxALIGN_CENTER_VERTICAL|wxALL, FromDIP(5));
 
     m_VolumeBrowse = new wxButton( itemDialog1, ID_VOLUME_BROWSE, _("..."), wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT );
-    itemBoxSizer4->Add(m_VolumeBrowse, 0, wxALIGN_CENTER_VERTICAL|wxRIGHT|wxTOP|wxBOTTOM, 5);
+    itemBoxSizer4->Add(m_VolumeBrowse, 0, wxALIGN_CENTER_VERTICAL|wxRIGHT|wxTOP|wxBOTTOM, FromDIP(5));
 
     wxStaticText* itemStaticText7 = new wxStaticText( itemDialog1, wxID_STATIC, _("Volume name"), wxDefaultPosition, wxDefaultSize, 0 );
     itemBoxSizer2->Add(itemStaticText7, 0, wxALIGN_LEFT|wxLEFT|wxRIGHT|wxTOP|wxADJUST_MINSIZE, 5);
 
     wxBoxSizer* itemBoxSizer8 = new wxBoxSizer(wxHORIZONTAL);
-    itemBoxSizer2->Add(itemBoxSizer8, 0, wxGROW|wxBOTTOM, 5);
+    itemBoxSizer2->Add(itemBoxSizer8, 0, wxGROW|wxBOTTOM, FromDIP(5));
 
-    m_VolumeName = new wxTextCtrl( itemDialog1, ID_VOLUME_NAME, wxEmptyString, wxDefaultPosition, wxSize(200, -1), 0 );
-    itemBoxSizer8->Add(m_VolumeName, 1, wxALIGN_CENTER_VERTICAL|wxALL, 5);
+    m_VolumeName = new wxTextCtrl( itemDialog1, ID_VOLUME_NAME, wxEmptyString, wxDefaultPosition, wxSize(FromDIP(200), -1), 0 );
+    itemBoxSizer8->Add(m_VolumeName, 1, wxALIGN_CENTER_VERTICAL|wxALL, FromDIP(5));
 
 #if defined(__WXMSW__)
     m_GetVolumeNameButton = new wxButton( itemDialog1, ID_GET_VOLUME_NAME, _("Get volume name"), wxDefaultPosition, wxDefaultSize, 0 );
-    itemBoxSizer8->Add(m_GetVolumeNameButton, 0, wxALIGN_CENTER_VERTICAL|wxRIGHT|wxTOP|wxBOTTOM, 5);
+    itemBoxSizer8->Add(m_GetVolumeNameButton, 0, wxALIGN_CENTER_VERTICAL|wxRIGHT|wxTOP|wxBOTTOM, FromDIP(5));
 
 #endif
 
     wxBoxSizer* itemBoxSizer11 = new wxBoxSizer(wxHORIZONTAL);
-    itemBoxSizer2->Add(itemBoxSizer11, 0, wxGROW|wxTOP|wxBOTTOM, 5);
+    itemBoxSizer2->Add(itemBoxSizer11, 0, wxGROW|wxTOP|wxBOTTOM, FromDIP(5));
 
     m_HelpButton = new wxButton( itemDialog1, wxID_HELP, _("&Help"), wxDefaultPosition, wxDefaultSize, 0 );
-    itemBoxSizer11->Add(m_HelpButton, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5);
+    itemBoxSizer11->Add(m_HelpButton, 0, wxALIGN_CENTER_VERTICAL|wxALL, FromDIP(5));
 
-    itemBoxSizer11->Add(5, 5, 1, wxALIGN_CENTER_VERTICAL|wxALL, 5);
+    itemBoxSizer11->Add(FromDIP(5), FromDIP(5), 1, wxALIGN_CENTER_VERTICAL|wxALL, FromDIP(5));
 
     m_CatalogButton = new wxButton( itemDialog1, ID_BUTTON_CATALOG, _("Catalog"), wxDefaultPosition, wxDefaultSize, 0 );
-    itemBoxSizer11->Add(m_CatalogButton, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5);
+    itemBoxSizer11->Add(m_CatalogButton, 0, wxALIGN_CENTER_VERTICAL|wxALL, FromDIP(5));
 
     m_CloseButton = new wxButton( itemDialog1, wxID_CANCEL, _("&Close"), wxDefaultPosition, wxDefaultSize, 0 );
-    itemBoxSizer11->Add(m_CloseButton, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5);
+    itemBoxSizer11->Add(m_CloseButton, 0, wxALIGN_CENTER_VERTICAL|wxALL, FromDIP(5));
 
     m_CurrentFolder = new wxStaticText( itemDialog1, ID_CURRENT_FOLDER, _("Current folder"), wxDefaultPosition, wxDefaultSize, 0 );
     itemBoxSizer2->Add(m_CurrentFolder, 0, wxGROW|wxALL|wxADJUST_MINSIZE, 5);
 
     wxStaticText* itemStaticText17 = new wxStaticText( itemDialog1, wxID_STATIC, _("Previously cataloged volumes"), wxDefaultPosition, wxDefaultSize, 0 );
-    itemBoxSizer2->Add(itemStaticText17, 0, wxALIGN_LEFT|wxALL, 5);
+    itemBoxSizer2->Add(itemStaticText17, 0, wxALIGN_LEFT|wxALL, FromDIP(5));
 
     wxArrayString m_HistoryListBoxStrings;
-    m_HistoryListBox = new wxListBox( itemDialog1, ID_LISTBOX_HISTORY, wxDefaultPosition, wxSize(-1, 80), m_HistoryListBoxStrings, wxLB_SINGLE );
-    itemBoxSizer2->Add(m_HistoryListBox, 1, wxGROW|wxALL, 5);
+    m_HistoryListBox = new wxListBox( itemDialog1, ID_LISTBOX_HISTORY, wxDefaultPosition, wxSize(-1, FromDIP(80)), m_HistoryListBoxStrings, wxLB_SINGLE );
+    itemBoxSizer2->Add(m_HistoryListBox, 1, wxGROW|wxALL, FromDIP(5));
 
 ////@end CDialogCatalogVolume content construction
 

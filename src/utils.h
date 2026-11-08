@@ -113,7 +113,9 @@ public:
 
     // return an icon to be used with the tree and list pane
     // looks for an icon returned from the art provider, if not found uses a stock one
-    static wxIcon GetIconForPane( const char *xpm[], const wxArtID &id );
+    // size is the requested icon size in physical pixels (use FromDIP() to get
+    // it); wxDefaultSize asks the art provider for its default size
+    static wxIcon GetIconForPane( const char *xpm[], const wxArtID &id, const wxSize& size = wxDefaultSize );
 
     // add thousands separators to the input string that must reperesente an integer number
     static wxString AddThousandsSeparators( const wxString &s );

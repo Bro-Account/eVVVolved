@@ -172,27 +172,27 @@ void CDialogSettings::CreateControls()
     itemPanel2->SetSizer(itemBoxSizer3);
 
     wxBoxSizer* itemBoxSizer4 = new wxBoxSizer(wxVERTICAL);
-    itemBoxSizer3->Add(itemBoxSizer4, 0, wxGROW|wxALL, 5);
+    itemBoxSizer3->Add(itemBoxSizer4, 0, wxGROW|wxALL, FromDIP(5));
     wxCheckBox* itemCheckBox5 = new wxCheckBox( itemPanel2, ID_DS_REOPEN_CATALOG, _("Reopen the last used catalog at startup"), wxDefaultPosition, wxDefaultSize, 0 );
     itemCheckBox5->SetValue(false);
-    itemBoxSizer4->Add(itemCheckBox5, 0, wxALIGN_LEFT|wxALL, 5);
+    itemBoxSizer4->Add(itemCheckBox5, 0, wxALIGN_LEFT|wxALL, FromDIP(5));
 
     wxCheckBox* itemCheckBox6 = new wxCheckBox( itemPanel2, wxID_ANY, _("Alternate row colors"), wxDefaultPosition, wxDefaultSize, 0 );
     itemCheckBox6->SetValue(false);
-    itemBoxSizer4->Add(itemCheckBox6, 0, wxALIGN_LEFT|wxALL, 5);
+    itemBoxSizer4->Add(itemCheckBox6, 0, wxALIGN_LEFT|wxALL, FromDIP(5));
 
     wxBoxSizer* itemBoxSizer7 = new wxBoxSizer(wxHORIZONTAL);
-    itemBoxSizer4->Add(itemBoxSizer7, 0, wxALIGN_LEFT|wxALL, 5);
+    itemBoxSizer4->Add(itemBoxSizer7, 0, wxALIGN_LEFT|wxALL, FromDIP(5));
     wxStaticText* itemStaticText8 = new wxStaticText( itemPanel2, wxID_STATIC, _("Beep for tasks longer than (seconds):"), wxDefaultPosition, wxDefaultSize, 0 );
-    itemBoxSizer7->Add(itemStaticText8, 0, wxALIGN_CENTER_VERTICAL|wxRIGHT|wxTOP|wxBOTTOM, 5);
+    itemBoxSizer7->Add(itemStaticText8, 0, wxALIGN_CENTER_VERTICAL|wxRIGHT|wxTOP|wxBOTTOM, FromDIP(5));
 
-    m_BeepTimeCtrl = new wxSpinCtrl( itemPanel2, ID_SPIN_BEEP_TIME, wxT("0"), wxDefaultPosition, wxSize(60, -1), wxSP_ARROW_KEYS, 0, 10000, 0 );
-    itemBoxSizer7->Add(m_BeepTimeCtrl, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5);
+    m_BeepTimeCtrl = new wxSpinCtrl( itemPanel2, ID_SPIN_BEEP_TIME, wxT("0"), wxDefaultPosition, wxSize(FromDIP(60), -1), wxSP_ARROW_KEYS, 0, 10000, 0 );
+    itemBoxSizer7->Add(m_BeepTimeCtrl, 0, wxALIGN_CENTER_VERTICAL|wxALL, FromDIP(5));
 
-    itemBoxSizer4->Add(5, 5, 1, wxALIGN_CENTER_HORIZONTAL|wxALL, 5);
+    itemBoxSizer4->Add(FromDIP(5), FromDIP(5), 1, wxALIGN_CENTER_HORIZONTAL|wxALL, FromDIP(5));
 
     wxButton* itemButton11 = new wxButton( itemPanel2, ID_BTN_CHANGE_LANGUAGE, _("Change language"), wxDefaultPosition, wxDefaultSize, 0 );
-    itemBoxSizer4->Add(itemButton11, 0, wxALIGN_LEFT|wxALL, 5);
+    itemBoxSizer4->Add(itemButton11, 0, wxALIGN_LEFT|wxALL, FromDIP(5));
 
     GetBookCtrl()->AddPage(itemPanel2, _("General"));
 
@@ -201,61 +201,61 @@ void CDialogSettings::CreateControls()
     itemPanel12->SetSizer(itemBoxSizer13);
 
     wxBoxSizer* itemBoxSizer14 = new wxBoxSizer(wxVERTICAL);
-    itemBoxSizer13->Add(itemBoxSizer14, 0, wxGROW|wxALL, 5);
+    itemBoxSizer13->Add(itemBoxSizer14, 0, wxGROW|wxALL, FromDIP(5));
     m_chkCatalogAudioMetadata = new wxCheckBox( itemPanel12, wxID_ANY, _("Catalog audio metadata"), wxDefaultPosition, wxDefaultSize, 0 );
     m_chkCatalogAudioMetadata->SetValue(false);
-    itemBoxSizer14->Add(m_chkCatalogAudioMetadata, 0, wxALIGN_LEFT|wxALL, 5);
+    itemBoxSizer14->Add(m_chkCatalogAudioMetadata, 0, wxALIGN_LEFT|wxALL, FromDIP(5));
 
-    itemBoxSizer14->Add(2, 2, 0, wxALIGN_CENTER_HORIZONTAL|wxALL, 2);
+    itemBoxSizer14->Add(FromDIP(2), FromDIP(2), 0, wxALIGN_CENTER_HORIZONTAL|wxALL, FromDIP(2));
 
     wxStaticText* itemStaticText17 = new wxStaticText( itemPanel12, wxID_STATIC, _("Show the following data for audio files:"), wxDefaultPosition, wxDefaultSize, 0 );
-    itemBoxSizer14->Add(itemStaticText17, 0, wxALIGN_LEFT|wxALL, 5);
+    itemBoxSizer14->Add(itemStaticText17, 0, wxALIGN_LEFT|wxALL, FromDIP(5));
 
     m_chkArtist = new wxCheckBox( itemPanel12, ID_DS_ARTIST, _("Artist"), wxDefaultPosition, wxDefaultSize, 0 );
     m_chkArtist->SetValue(false);
-    itemBoxSizer14->Add(m_chkArtist, 0, wxALIGN_LEFT|wxALL, 5);
+    itemBoxSizer14->Add(m_chkArtist, 0, wxALIGN_LEFT|wxALL, FromDIP(5));
 
     m_chkAlbum = new wxCheckBox( itemPanel12, ID_DS_ALBUM, _("Album"), wxDefaultPosition, wxDefaultSize, 0 );
     m_chkAlbum->SetValue(false);
-    itemBoxSizer14->Add(m_chkAlbum, 0, wxALIGN_LEFT|wxALL, 5);
+    itemBoxSizer14->Add(m_chkAlbum, 0, wxALIGN_LEFT|wxALL, FromDIP(5));
 
     m_chkTitle = new wxCheckBox( itemPanel12, ID_DS_TITLE, _("Title"), wxDefaultPosition, wxDefaultSize, 0 );
     m_chkTitle->SetValue(false);
-    itemBoxSizer14->Add(m_chkTitle, 0, wxALIGN_LEFT|wxALL, 5);
+    itemBoxSizer14->Add(m_chkTitle, 0, wxALIGN_LEFT|wxALL, FromDIP(5));
 
     m_chkYear = new wxCheckBox( itemPanel12, ID_DS_YEAR, _("Year"), wxDefaultPosition, wxDefaultSize, 0 );
     m_chkYear->SetValue(false);
-    itemBoxSizer14->Add(m_chkYear, 0, wxALIGN_LEFT|wxALL, 5);
+    itemBoxSizer14->Add(m_chkYear, 0, wxALIGN_LEFT|wxALL, FromDIP(5));
 
     m_chkComment = new wxCheckBox( itemPanel12, ID_DS_COMMENT, _("Comment"), wxDefaultPosition, wxDefaultSize, 0 );
     m_chkComment->SetValue(false);
-    itemBoxSizer14->Add(m_chkComment, 0, wxALIGN_LEFT|wxALL, 5);
+    itemBoxSizer14->Add(m_chkComment, 0, wxALIGN_LEFT|wxALL, FromDIP(5));
 
     m_chkTrackNumber = new wxCheckBox( itemPanel12, ID_DS_TRACK_NUMBER, _("Track number"), wxDefaultPosition, wxDefaultSize, 0 );
     m_chkTrackNumber->SetValue(false);
-    itemBoxSizer14->Add(m_chkTrackNumber, 0, wxALIGN_LEFT|wxALL, 5);
+    itemBoxSizer14->Add(m_chkTrackNumber, 0, wxALIGN_LEFT|wxALL, FromDIP(5));
 
     m_chkGenre = new wxCheckBox( itemPanel12, ID_DS_GENRE, _("Genre"), wxDefaultPosition, wxDefaultSize, 0 );
     m_chkGenre->SetValue(false);
-    itemBoxSizer14->Add(m_chkGenre, 0, wxALIGN_LEFT|wxALL, 5);
+    itemBoxSizer14->Add(m_chkGenre, 0, wxALIGN_LEFT|wxALL, FromDIP(5));
 
     m_chkLength = new wxCheckBox( itemPanel12, ID_DS_LENGTH, _("Length"), wxDefaultPosition, wxDefaultSize, 0 );
     m_chkLength->SetValue(false);
-    itemBoxSizer14->Add(m_chkLength, 0, wxALIGN_LEFT|wxALL, 5);
+    itemBoxSizer14->Add(m_chkLength, 0, wxALIGN_LEFT|wxALL, FromDIP(5));
 
     m_chkBitrate = new wxCheckBox( itemPanel12, ID_DS_BITRATE, _("Bitrate"), wxDefaultPosition, wxDefaultSize, 0 );
     m_chkBitrate->SetValue(false);
-    itemBoxSizer14->Add(m_chkBitrate, 0, wxALIGN_LEFT|wxALL, 5);
+    itemBoxSizer14->Add(m_chkBitrate, 0, wxALIGN_LEFT|wxALL, FromDIP(5));
 
     m_chkSampleRate = new wxCheckBox( itemPanel12, ID_DS_SAMPLE_RATE, _("Sample rate"), wxDefaultPosition, wxDefaultSize, 0 );
     m_chkSampleRate->SetValue(false);
-    itemBoxSizer14->Add(m_chkSampleRate, 0, wxALIGN_LEFT|wxALL, 5);
+    itemBoxSizer14->Add(m_chkSampleRate, 0, wxALIGN_LEFT|wxALL, FromDIP(5));
 
     m_chkChannels = new wxCheckBox( itemPanel12, ID_DS_CHANNELS, _("Channels"), wxDefaultPosition, wxDefaultSize, 0 );
     m_chkChannels->SetValue(false);
-    itemBoxSizer14->Add(m_chkChannels, 0, wxALIGN_LEFT|wxALL, 5);
+    itemBoxSizer14->Add(m_chkChannels, 0, wxALIGN_LEFT|wxALL, FromDIP(5));
 
-    itemBoxSizer14->Add(5, 5, 0, wxALIGN_CENTER_HORIZONTAL|wxALL, 5);
+    itemBoxSizer14->Add(FromDIP(5), FromDIP(5), 0, wxALIGN_CENTER_HORIZONTAL|wxALL, FromDIP(5));
 
     GetBookCtrl()->AddPage(itemPanel12, _("Audio files"));
 
@@ -264,42 +264,42 @@ void CDialogSettings::CreateControls()
     itemPanel30->SetSizer(itemBoxSizer31);
 
     wxBoxSizer* itemBoxSizer32 = new wxBoxSizer(wxVERTICAL);
-    itemBoxSizer31->Add(itemBoxSizer32, 0, wxGROW|wxALL, 5);
+    itemBoxSizer31->Add(itemBoxSizer32, 0, wxGROW|wxALL, FromDIP(5));
     wxStaticText* itemStaticText33 = new wxStaticText( itemPanel30, wxID_STATIC, _("Check the checkbox below if you want to access catalogs stored\nin a network server. Each computer in the network will be able to\naccess the same catalogs stored in the server.\nDO NOT check the checkbox if you only want to access catalogs\nstored in this computer and you do not want to share them\nwith other computers."), wxDefaultPosition, wxDefaultSize, wxALIGN_LEFT );
-    itemBoxSizer32->Add(itemStaticText33, 0, wxGROW|wxALL, 5);
+    itemBoxSizer32->Add(itemStaticText33, 0, wxGROW|wxALL, FromDIP(5));
 
-    itemBoxSizer32->Add(5, 5, 0, wxALIGN_CENTER_HORIZONTAL|wxALL, 5);
+    itemBoxSizer32->Add(FromDIP(5), FromDIP(5), 0, wxALIGN_CENTER_HORIZONTAL|wxALL, FromDIP(5));
 
     m_ConnectServerCtrl = new wxCheckBox( itemPanel30, ID_DS_CONNECT_SERVER, _("Connect to a network server"), wxDefaultPosition, wxDefaultSize, 0 );
     m_ConnectServerCtrl->SetValue(false);
-    itemBoxSizer32->Add(m_ConnectServerCtrl, 0, wxALIGN_LEFT|wxALL, 5);
+    itemBoxSizer32->Add(m_ConnectServerCtrl, 0, wxALIGN_LEFT|wxALL, FromDIP(5));
 
     wxFlexGridSizer* itemFlexGridSizer36 = new wxFlexGridSizer(3, 2, 0, 0);
-    itemBoxSizer32->Add(itemFlexGridSizer36, 0, wxGROW|wxALL, 5);
+    itemBoxSizer32->Add(itemFlexGridSizer36, 0, wxGROW|wxALL, FromDIP(5));
     wxStaticText* itemStaticText37 = new wxStaticText( itemPanel30, wxID_STATIC, _("Server"), wxDefaultPosition, wxDefaultSize, 0 );
-    itemFlexGridSizer36->Add(itemStaticText37, 0, wxALIGN_LEFT|wxALIGN_CENTER_VERTICAL|wxALL, 5);
+    itemFlexGridSizer36->Add(itemStaticText37, 0, wxALIGN_LEFT|wxALIGN_CENTER_VERTICAL|wxALL, FromDIP(5));
 
     m_ServerNameCtrl = new wxTextCtrl( itemPanel30, ID_DS_SERVERNAME, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
-    itemFlexGridSizer36->Add(m_ServerNameCtrl, 0, wxGROW|wxALIGN_CENTER_VERTICAL|wxALL, 5);
+    itemFlexGridSizer36->Add(m_ServerNameCtrl, 0, wxGROW|wxALIGN_CENTER_VERTICAL|wxALL, FromDIP(5));
 
     wxStaticText* itemStaticText39 = new wxStaticText( itemPanel30, wxID_STATIC, _("Username"), wxDefaultPosition, wxDefaultSize, 0 );
-    itemFlexGridSizer36->Add(itemStaticText39, 0, wxALIGN_LEFT|wxALIGN_CENTER_VERTICAL|wxALL, 5);
+    itemFlexGridSizer36->Add(itemStaticText39, 0, wxALIGN_LEFT|wxALIGN_CENTER_VERTICAL|wxALL, FromDIP(5));
 
     m_UsernameCtrl = new wxTextCtrl( itemPanel30, ID_DS_USERNAME, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
-    itemFlexGridSizer36->Add(m_UsernameCtrl, 0, wxGROW|wxALIGN_CENTER_VERTICAL|wxALL, 5);
+    itemFlexGridSizer36->Add(m_UsernameCtrl, 0, wxGROW|wxALIGN_CENTER_VERTICAL|wxALL, FromDIP(5));
 
     wxStaticText* itemStaticText41 = new wxStaticText( itemPanel30, wxID_STATIC, _("Password"), wxDefaultPosition, wxDefaultSize, 0 );
-    itemFlexGridSizer36->Add(itemStaticText41, 0, wxALIGN_LEFT|wxALIGN_CENTER_VERTICAL|wxALL, 5);
+    itemFlexGridSizer36->Add(itemStaticText41, 0, wxALIGN_LEFT|wxALIGN_CENTER_VERTICAL|wxALL, FromDIP(5));
 
     m_PasswordCtrl = new wxTextCtrl( itemPanel30, ID_DS_PASSWORD, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_PASSWORD );
-    itemFlexGridSizer36->Add(m_PasswordCtrl, 0, wxGROW|wxALIGN_CENTER_VERTICAL|wxALL, 5);
+    itemFlexGridSizer36->Add(m_PasswordCtrl, 0, wxGROW|wxALIGN_CENTER_VERTICAL|wxALL, FromDIP(5));
 
     itemFlexGridSizer36->AddGrowableCol(1);
 
-    itemBoxSizer32->Add(5, 5, 0, wxALIGN_CENTER_HORIZONTAL|wxALL, 5);
+    itemBoxSizer32->Add(FromDIP(5), FromDIP(5), 0, wxALIGN_CENTER_HORIZONTAL|wxALL, FromDIP(5));
 
     wxButton* itemButton44 = new wxButton( itemPanel30, ID_DS_TEST_CONNECTION, _("Test server connection"), wxDefaultPosition, wxDefaultSize, 0 );
-    itemBoxSizer32->Add(itemButton44, 0, wxALIGN_RIGHT|wxALL, 5);
+    itemBoxSizer32->Add(itemButton44, 0, wxALIGN_RIGHT|wxALL, FromDIP(5));
 
     GetBookCtrl()->AddPage(itemPanel30, _("Server"));
 
@@ -320,15 +320,15 @@ void CDialogSettings::CreateControls()
     wxWindow* generalPage = GetBookCtrl()->GetPage(0);
     wxSizer* generalSizer = generalPage->GetSizer()->GetItem((size_t)0)->GetSizer();
     wxBoxSizer* appearanceSizer = new wxBoxSizer(wxHORIZONTAL);
-    generalSizer->Insert(generalSizer->GetItemCount() - 2, appearanceSizer, 0, wxALIGN_LEFT|wxALL, 5);
-    appearanceSizer->Add(new wxStaticText( generalPage, wxID_STATIC, _("Appearance:") ), 0, wxALIGN_CENTER_VERTICAL|wxRIGHT|wxTOP|wxBOTTOM, 5);
+    generalSizer->Insert(generalSizer->GetItemCount() - 2, appearanceSizer, 0, wxALIGN_LEFT|wxALL, FromDIP(5));
+    appearanceSizer->Add(new wxStaticText( generalPage, wxID_STATIC, _("Appearance:") ), 0, wxALIGN_CENTER_VERTICAL|wxRIGHT|wxTOP|wxBOTTOM, FromDIP(5));
     wxArrayString appearanceChoices;
     appearanceChoices.Add(_("Same as the system"));
     appearanceChoices.Add(_("Light"));
     appearanceChoices.Add(_("Dark"));
     wxChoice* appearanceCtrl = new wxChoice( generalPage, wxID_ANY, wxDefaultPosition, wxDefaultSize, appearanceChoices );
     appearanceCtrl->SetValidator( wxGenericValidator(& m_Appearance) );
-    appearanceSizer->Add(appearanceCtrl, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5);
+    appearanceSizer->Add(appearanceCtrl, 0, wxALIGN_CENTER_VERTICAL|wxALL, FromDIP(5));
 #endif
 }
 

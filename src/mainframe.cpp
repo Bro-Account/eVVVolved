@@ -55,6 +55,8 @@
 ////@end includes
 
 #include "wx/textdlg.h"
+#include "wx/math.h"
+#include "wx/display.h"
 #include "wx/filename.h"
 #include "wx/ffile.h"
 #include "wx/config.h"
@@ -342,10 +344,30 @@ int wxCALLBACK ListControlCompareFunction( wxIntPtr item1, wxIntPtr item2, wxInt
 	return retVal;
 }
 
-static wxBitmap GetBitmapForToolbar( const char *xpm[], const wxArtID &id )
+// Returns a toolbar bitmap scaled for the DPI of the given window. The stock
+// XPM/PNG resources are 16x16, so on a high-DPI display they would otherwise be
+// drawn much smaller than the toolbar text.
+static wxBitmap ScaleToolbarBitmap( wxWindow* win, const wxBitmap& bmp )
+{
+    if( !bmp.IsOk() )
+        return bmp;
+
+    const wxSize target = win->FromDIP( wxSize(16, 16) );
+    if( bmp.GetSize() == target )
+        return bmp;
+
+    wxImage img = bmp.ConvertToImage();
+    if( !img.IsOk() )
+        return bmp;
+
+    img.Rescale( target.x, target.y, wxIMAGE_QUALITY_HIGH );
+    return wxBitmap( img );
+}
+
+static wxBitmap GetBitmapForToolbar( const char *xpm[], const wxArtID &id, wxWindow* win )
 {
     wxBitmap r;
-    wxBitmap bmpProv = wxArtProvider::GetBitmap( id, wxART_TOOLBAR, wxSize(16, 16) );
+    wxBitmap bmpProv = wxArtProvider::GetBitmap( id, wxART_TOOLBAR, win->FromDIP( wxSize(16, 16) ) );
     if( bmpProv.IsOk() ) {
         r = bmpProv;
     }
@@ -353,7 +375,7 @@ static wxBitmap GetBitmapForToolbar( const char *xpm[], const wxArtID &id )
         wxBitmap bitmap( xpm );
         r = bitmap;
     }
-    return r;
+    return ScaleToolbarBitmap( win, r );
 }
 
 /*!
@@ -639,15 +661,60 @@ bool CMainFrame::Create( wxWindow* parent, wxWindowID id, const wxString& captio
 	// reads the frame position from the config object
 	wxConfigBase *pConfig = wxConfigBase::Get();
 	pConfig->SetPath(wxT("/Mainframe/Layout"));
+
+	// Layout values are stored in physical pixels together with the DPI scale
+	// they were saved at. Legacy configurations have no "Dpi" value: assume
+	// they were written at 96 DPI and scale them to the current one.
+	const double currentDpi = GetDPIScaleFactor();
+	double savedDpi = pConfig->ReadDouble(wxT("Dpi"), 1.0);
+	if( savedDpi <= 0.0 )
+		savedDpi = 1.0;
+	const double layoutScale = currentDpi / savedDpi;
+
 	int x = pConfig->Read(wxT("x"), 50),
 		y = pConfig->Read(wxT("y"), 50),
-		w = pConfig->Read(wxT("w"), 600),
-		h = pConfig->Read(wxT("h"), 400);
+		w = wxRound( pConfig->Read(wxT("w"), 600) * layoutScale ),
+		h = wxRound( pConfig->Read(wxT("h"), 400) * layoutScale );
+
+	// The display the window will appear on, used to keep the restored size
+	// inside its work area (also protects against configurations saved on a
+	// larger monitor).
+	int displayIndex = wxDisplay::GetFromPoint( wxPoint(x, y) );
+	if( displayIndex == wxNOT_FOUND )
+		displayIndex = 0;
+	const wxRect workArea = wxDisplay( displayIndex ).GetClientArea();
 
 	// test that the coordinates
 	if( CWindowPosition::CheckCoordinates(x, y, w, h) ) {
 		Move(x, y);
 		SetClientSize(w, h);
+	}
+	else if( w >= 100 && h >= 100 ) {
+		// keep the saved size but let the window manager choose the position
+		SetClientSize(w, h);
+	}
+
+	// wxFrame's client size does not include the toolbar and the status bar, so
+	// measure the decorations after the first resize before clamping the window
+	// to the work area.
+	{
+		wxSize outer = GetSize();
+		if( outer.x > workArea.width || outer.y > workArea.height ) {
+			const wxSize extra = outer - GetClientSize();
+			const int cw = wxMin( GetClientSize().x, workArea.width - extra.x );
+			const int ch = wxMin( GetClientSize().y, workArea.height - extra.y );
+			if( cw >= 100 && ch >= 100 )
+				SetClientSize( cw, ch );
+			outer = GetSize();
+		}
+		// Keep the whole frame on the display, even when the saved position was
+		// near an edge (a window clamped to the work area would otherwise still
+		// extend past it).
+		const wxPoint pos = GetPosition();
+		const int nx = wxMin( wxMax( pos.x, workArea.x ), workArea.GetRight() + 1 - outer.x );
+		const int ny = wxMin( wxMax( pos.y, workArea.y ), workArea.GetBottom() + 1 - outer.y );
+		if( nx != pos.x || ny != pos.y )
+			Move( nx, ny );
 	}
 	bool FrameMaximized;
 	pConfig->Read( wxT("Maximized"), &FrameMaximized, false );
@@ -657,73 +724,80 @@ bool CMainFrame::Create( wxWindow* parent, wxWindowID id, const wxString& captio
 
 	// reads the splitter sash position
 	wxSplitterWindow* sw = GetSplitterWindow();
-	sw->SetSashPosition( pConfig->Read(wxT("SashPosition"), 200) );
+	sw->SetSashPosition( wxRound( pConfig->Read(wxT("SashPosition"), 200) * layoutScale ) );
 
 	// reads the MRU files list
 	m_fileHistory->Load( *pConfig );
 
 	// reads the listview columns width
+	// Current versions store widths in DIPs. Older ones stored raw pixels:
+	// assume they were saved at 96 DPI and scale them to the current DPI.
+	const bool widthsInDIP = pConfig->Read(wxT("cwUnitsDIP"), 0L) != 0;
+	auto readColWidth = [&]( const wxString& key, int defaultDip ) -> int {
+		const int raw = pConfig->Read( key, defaultDip );
+		return widthsInDIP ? FromDIP( raw ) : wxRound( raw * currentDpi );
+	};
 	int k = 0;
 	pConfig->SetPath(wxT("/Mainframe/Layout/ListViewPhysical"));
-	m_ListviewColWidthPhysical[k++] = pConfig->Read(wxT("cw0"), 200);
-	m_ListviewColWidthPhysical[k++] = pConfig->Read(wxT("cw1"), 100);
-	m_ListviewColWidthPhysical[k++] = pConfig->Read(wxT("cw2"), 100);
-	m_ListviewColWidthPhysical[k++] = pConfig->Read(wxT("cw3"), 200);
-	m_ListviewColWidthPhysical[k++] = pConfig->Read(wxT("cw4"), 100);
+	m_ListviewColWidthPhysical[k++] = readColWidth(wxT("cw0"), 200);
+	m_ListviewColWidthPhysical[k++] = readColWidth(wxT("cw1"), 100);
+	m_ListviewColWidthPhysical[k++] = readColWidth(wxT("cw2"), 100);
+	m_ListviewColWidthPhysical[k++] = readColWidth(wxT("cw3"), 200);
+	m_ListviewColWidthPhysical[k++] = readColWidth(wxT("cw4"), 100);
 	// audio metadata
-	m_ListviewColWidthPhysical[k++] = pConfig->Read(wxT("cw5"), 150);
-	m_ListviewColWidthPhysical[k++] = pConfig->Read(wxT("cw6"), 150);
-	m_ListviewColWidthPhysical[k++] = pConfig->Read(wxT("cw7"), 150);
-	m_ListviewColWidthPhysical[k++] = pConfig->Read(wxT("cw8"), 50);
-	m_ListviewColWidthPhysical[k++] = pConfig->Read(wxT("cw9"), 100);
-	m_ListviewColWidthPhysical[k++] = pConfig->Read(wxT("cw10"), 70);
-	m_ListviewColWidthPhysical[k++] = pConfig->Read(wxT("cw11"), 90);
-	m_ListviewColWidthPhysical[k++] = pConfig->Read(wxT("cw12"), 70);
-	m_ListviewColWidthPhysical[k++] = pConfig->Read(wxT("cw13"), 70);
-	m_ListviewColWidthPhysical[k++] = pConfig->Read(wxT("cw14"), 90);
-	m_ListviewColWidthPhysical[k++] = pConfig->Read(wxT("cw15"), 70);
+	m_ListviewColWidthPhysical[k++] = readColWidth(wxT("cw5"), 150);
+	m_ListviewColWidthPhysical[k++] = readColWidth(wxT("cw6"), 150);
+	m_ListviewColWidthPhysical[k++] = readColWidth(wxT("cw7"), 150);
+	m_ListviewColWidthPhysical[k++] = readColWidth(wxT("cw8"), 50);
+	m_ListviewColWidthPhysical[k++] = readColWidth(wxT("cw9"), 100);
+	m_ListviewColWidthPhysical[k++] = readColWidth(wxT("cw10"), 70);
+	m_ListviewColWidthPhysical[k++] = readColWidth(wxT("cw11"), 90);
+	m_ListviewColWidthPhysical[k++] = readColWidth(wxT("cw12"), 70);
+	m_ListviewColWidthPhysical[k++] = readColWidth(wxT("cw13"), 70);
+	m_ListviewColWidthPhysical[k++] = readColWidth(wxT("cw14"), 90);
+	m_ListviewColWidthPhysical[k++] = readColWidth(wxT("cw15"), 70);
 
 	k = 0;
 	pConfig->SetPath(wxT("/Mainframe/Layout/ListViewVirtual"));
-	m_ListviewColWidthVirtual[k++] = pConfig->Read(wxT("cw0"), 200);
-	m_ListviewColWidthVirtual[k++] = pConfig->Read(wxT("cw1"), 100);
-	m_ListviewColWidthVirtual[k++] = pConfig->Read(wxT("cw2"), 100);
-	m_ListviewColWidthVirtual[k++] = pConfig->Read(wxT("cw3"), 200);
-	m_ListviewColWidthVirtual[k++] = pConfig->Read(wxT("cw4"), 200);
-	m_ListviewColWidthVirtual[k++] = pConfig->Read(wxT("cw5"), 100);
+	m_ListviewColWidthVirtual[k++] = readColWidth(wxT("cw0"), 200);
+	m_ListviewColWidthVirtual[k++] = readColWidth(wxT("cw1"), 100);
+	m_ListviewColWidthVirtual[k++] = readColWidth(wxT("cw2"), 100);
+	m_ListviewColWidthVirtual[k++] = readColWidth(wxT("cw3"), 200);
+	m_ListviewColWidthVirtual[k++] = readColWidth(wxT("cw4"), 200);
+	m_ListviewColWidthVirtual[k++] = readColWidth(wxT("cw5"), 100);
 	// audio metadata
-	m_ListviewColWidthVirtual[k++] = pConfig->Read(wxT("cw6"), 150);
-	m_ListviewColWidthVirtual[k++] = pConfig->Read(wxT("cw7"), 150);
-	m_ListviewColWidthVirtual[k++] = pConfig->Read(wxT("cw8"), 150);
-	m_ListviewColWidthVirtual[k++] = pConfig->Read(wxT("cw9"), 50);
-	m_ListviewColWidthVirtual[k++] = pConfig->Read(wxT("cw10"), 100);
-	m_ListviewColWidthVirtual[k++] = pConfig->Read(wxT("cw11"), 70);
-	m_ListviewColWidthVirtual[k++] = pConfig->Read(wxT("cw12"), 90);
-	m_ListviewColWidthVirtual[k++] = pConfig->Read(wxT("cw13"), 70);
-	m_ListviewColWidthVirtual[k++] = pConfig->Read(wxT("cw14"), 70);
-	m_ListviewColWidthVirtual[k++] = pConfig->Read(wxT("cw15"), 90);
-	m_ListviewColWidthVirtual[k++] = pConfig->Read(wxT("cw16"), 70);
+	m_ListviewColWidthVirtual[k++] = readColWidth(wxT("cw6"), 150);
+	m_ListviewColWidthVirtual[k++] = readColWidth(wxT("cw7"), 150);
+	m_ListviewColWidthVirtual[k++] = readColWidth(wxT("cw8"), 150);
+	m_ListviewColWidthVirtual[k++] = readColWidth(wxT("cw9"), 50);
+	m_ListviewColWidthVirtual[k++] = readColWidth(wxT("cw10"), 100);
+	m_ListviewColWidthVirtual[k++] = readColWidth(wxT("cw11"), 70);
+	m_ListviewColWidthVirtual[k++] = readColWidth(wxT("cw12"), 90);
+	m_ListviewColWidthVirtual[k++] = readColWidth(wxT("cw13"), 70);
+	m_ListviewColWidthVirtual[k++] = readColWidth(wxT("cw14"), 70);
+	m_ListviewColWidthVirtual[k++] = readColWidth(wxT("cw15"), 90);
+	m_ListviewColWidthVirtual[k++] = readColWidth(wxT("cw16"), 70);
 
 	k = 0;
 	pConfig->SetPath(wxT("/Mainframe/Layout/ListViewSearch"));
-	m_ListviewColWidthSearch[k++] = pConfig->Read(wxT("cw0"), 200);
-	m_ListviewColWidthSearch[k++] = pConfig->Read(wxT("cw1"), 100);
-	m_ListviewColWidthSearch[k++] = pConfig->Read(wxT("cw2"), 100);
-	m_ListviewColWidthSearch[k++] = pConfig->Read(wxT("cw3"), 200);
-	m_ListviewColWidthSearch[k++] = pConfig->Read(wxT("cw4"), 200);
-	m_ListviewColWidthSearch[k++] = pConfig->Read(wxT("cw5"), 100);
+	m_ListviewColWidthSearch[k++] = readColWidth(wxT("cw0"), 200);
+	m_ListviewColWidthSearch[k++] = readColWidth(wxT("cw1"), 100);
+	m_ListviewColWidthSearch[k++] = readColWidth(wxT("cw2"), 100);
+	m_ListviewColWidthSearch[k++] = readColWidth(wxT("cw3"), 200);
+	m_ListviewColWidthSearch[k++] = readColWidth(wxT("cw4"), 200);
+	m_ListviewColWidthSearch[k++] = readColWidth(wxT("cw5"), 100);
 	// audio metadata
-	m_ListviewColWidthSearch[k++] = pConfig->Read(wxT("cw6"), 150);
-	m_ListviewColWidthSearch[k++] = pConfig->Read(wxT("cw7"), 150);
-	m_ListviewColWidthSearch[k++] = pConfig->Read(wxT("cw8"), 150);
-	m_ListviewColWidthSearch[k++] = pConfig->Read(wxT("cw9"), 50);
-	m_ListviewColWidthSearch[k++] = pConfig->Read(wxT("cw10"), 100);
-	m_ListviewColWidthSearch[k++] = pConfig->Read(wxT("cw11"), 70);
-	m_ListviewColWidthSearch[k++] = pConfig->Read(wxT("cw12"), 90);
-	m_ListviewColWidthSearch[k++] = pConfig->Read(wxT("cw13"), 70);
-	m_ListviewColWidthSearch[k++] = pConfig->Read(wxT("cw14"), 70);
-	m_ListviewColWidthSearch[k++] = pConfig->Read(wxT("cw15"), 90);
-	m_ListviewColWidthSearch[k++] = pConfig->Read(wxT("cw16"), 70);
+	m_ListviewColWidthSearch[k++] = readColWidth(wxT("cw6"), 150);
+	m_ListviewColWidthSearch[k++] = readColWidth(wxT("cw7"), 150);
+	m_ListviewColWidthSearch[k++] = readColWidth(wxT("cw8"), 150);
+	m_ListviewColWidthSearch[k++] = readColWidth(wxT("cw9"), 50);
+	m_ListviewColWidthSearch[k++] = readColWidth(wxT("cw10"), 100);
+	m_ListviewColWidthSearch[k++] = readColWidth(wxT("cw11"), 70);
+	m_ListviewColWidthSearch[k++] = readColWidth(wxT("cw12"), 90);
+	m_ListviewColWidthSearch[k++] = readColWidth(wxT("cw13"), 70);
+	m_ListviewColWidthSearch[k++] = readColWidth(wxT("cw14"), 70);
+	m_ListviewColWidthSearch[k++] = readColWidth(wxT("cw15"), 90);
+	m_ListviewColWidthSearch[k++] = readColWidth(wxT("cw16"), 70);
 
 	// reads the visibility state of audio metadata columns
 	m_amdColumnsToShow = new bool[N_AUDIO_METADATA_COLUMNS];
@@ -903,7 +977,7 @@ void CMainFrame::CreateControls()
     itemFrame1->SetMenuBar(menuBar);
 
     m_ToolbarCtrl = CreateToolBar( wxTB_FLAT|wxTB_HORIZONTAL|wxTB_TEXT, ID_TOOLBAR1 );
-    m_ToolbarCtrl->SetToolBitmapSize(wxSize(16, 16));
+    m_ToolbarCtrl->SetToolBitmapSize(FromDIP(wxSize(16, 16)));
     wxBitmap itemtool3Bitmap(itemFrame1->GetBitmapResource(wxT("graphics/tlb_new.xpm")));
     wxBitmap itemtool3BitmapDisabled;
     m_ToolbarCtrl->AddTool(wxID_NEW, _("New"), itemtool3Bitmap, itemtool3BitmapDisabled, wxITEM_NORMAL, _("Create a new catalog"), wxEmptyString);
@@ -932,9 +1006,9 @@ void CMainFrame::CreateControls()
     m_StatusBar = new wxStatusBar( itemFrame1, ID_STATUSBAR1, wxST_SIZEGRIP );
     m_StatusBar->SetFieldsCount(4);
     int m_StatusBarWidths[4];
-    m_StatusBarWidths[0] = 300;
-    m_StatusBarWidths[1] = 150;
-    m_StatusBarWidths[2] = 150;
+    m_StatusBarWidths[0] = FromDIP(300);
+    m_StatusBarWidths[1] = FromDIP(150);
+    m_StatusBarWidths[2] = FromDIP(150);
     m_StatusBarWidths[3] = -1;
     m_StatusBar->SetStatusWidths(4, m_StatusBarWidths);
     itemFrame1->SetStatusBar(m_StatusBar);
@@ -993,20 +1067,20 @@ void CMainFrame::CreateControls()
 		m_FilenameRadioBoxStrings.Add(_("Contains:"));
 		m_FilenameRadioBox = new wxRadioBox( m_SearchPanel, ID_RADIOBOX_FILENAME, _("File name"), wxDefaultPosition, wxDefaultSize, m_FilenameRadioBoxStrings, 1, wxRA_SPECIFY_COLS );
 		m_FilenameRadioBox->SetSelection(0);
-		itemBoxSizer3->Add(m_FilenameRadioBox, 0, wxALIGN_LEFT|wxALL, 5);
+		itemBoxSizer3->Add(m_FilenameRadioBox, 0, wxALIGN_LEFT|wxALL, FromDIP(5));
 
-		m_SearchFileName = new wxTextCtrl( m_SearchPanel, ID_SEARCH_FILE_NAME, _T(""), wxDefaultPosition, wxSize(200, -1), 0 );
-		itemBoxSizer3->Add(m_SearchFileName, 0, wxALIGN_LEFT|wxALL, 5);
+		m_SearchFileName = new wxTextCtrl( m_SearchPanel, ID_SEARCH_FILE_NAME, _T(""), wxDefaultPosition, wxSize(FromDIP(200), -1), 0 );
+		itemBoxSizer3->Add(m_SearchFileName, 0, wxALIGN_LEFT|wxALL, FromDIP(5));
 
-		itemBoxSizer3->Add(5, 3, 0, wxALIGN_CENTER_HORIZONTAL|wxALL, 5);
+		itemBoxSizer3->Add(FromDIP(5), FromDIP(3), 0, wxALIGN_CENTER_HORIZONTAL|wxALL, FromDIP(5));
 
 		wxStaticText* itemStaticText7 = new wxStaticText( m_SearchPanel, wxID_STATIC, _("Extension:"), wxDefaultPosition, wxDefaultSize, 0 );
-		itemBoxSizer3->Add(itemStaticText7, 0, wxALIGN_LEFT|wxALL, 5);
+		itemBoxSizer3->Add(itemStaticText7, 0, wxALIGN_LEFT|wxALL, FromDIP(5));
 
-		m_SearchExtension = new wxTextCtrl( m_SearchPanel, ID_SEARCH_EXTENSION, _T(""), wxDefaultPosition, wxSize(100, -1), 0 );
-		itemBoxSizer3->Add(m_SearchExtension, 0, wxALIGN_LEFT|wxALL, 5);
+		m_SearchExtension = new wxTextCtrl( m_SearchPanel, ID_SEARCH_EXTENSION, _T(""), wxDefaultPosition, wxSize(FromDIP(100), -1), 0 );
+		itemBoxSizer3->Add(m_SearchExtension, 0, wxALIGN_LEFT|wxALL, FromDIP(5));
 
-		itemBoxSizer3->Add(5, 3, 0, wxALIGN_CENTER_HORIZONTAL|wxALL, 5);
+		itemBoxSizer3->Add(FromDIP(5), FromDIP(3), 0, wxALIGN_CENTER_HORIZONTAL|wxALL, FromDIP(5));
 
 		wxArrayString m_DescriptionRadioBoxStrings;
 		m_DescriptionRadioBoxStrings.Add(_("Is equal to:"));
@@ -1014,12 +1088,12 @@ void CMainFrame::CreateControls()
 		m_DescriptionRadioBoxStrings.Add(_("Contains:"));
 		m_DescriptionRadioBox = new wxRadioBox( m_SearchPanel, ID_RADIOBOX_DESCRIPTION, _("Description"), wxDefaultPosition, wxDefaultSize, m_DescriptionRadioBoxStrings, 1, wxRA_SPECIFY_COLS );
 		m_DescriptionRadioBox->SetSelection(0);
-		itemBoxSizer3->Add(m_DescriptionRadioBox, 0, wxALIGN_LEFT|wxALL, 5);
+		itemBoxSizer3->Add(m_DescriptionRadioBox, 0, wxALIGN_LEFT|wxALL, FromDIP(5));
 
-		m_SearchDescription = new wxTextCtrl( m_SearchPanel, ID_SEARCH_DESCRIPTION, _T(""), wxDefaultPosition, wxSize(200, -1), 0 );
-		itemBoxSizer3->Add(m_SearchDescription, 0, wxALIGN_LEFT|wxALL, 5);
+		m_SearchDescription = new wxTextCtrl( m_SearchPanel, ID_SEARCH_DESCRIPTION, _T(""), wxDefaultPosition, wxSize(FromDIP(200), -1), 0 );
+		itemBoxSizer3->Add(m_SearchDescription, 0, wxALIGN_LEFT|wxALL, FromDIP(5));
 
-		itemBoxSizer3->Add(5, 5, 0, wxALIGN_CENTER_HORIZONTAL|wxALL, 5);
+		itemBoxSizer3->Add(FromDIP(5), FromDIP(5), 0, wxALIGN_CENTER_HORIZONTAL|wxALL, FromDIP(5));
 
 		wxArrayString m_SearchRadioBoxStrings;
 		m_SearchRadioBoxStrings.Add(_("All physical volumes"));
@@ -1027,13 +1101,13 @@ void CMainFrame::CreateControls()
 		m_SearchRadioBoxStrings.Add(_("Selected virtual folder"));
 		m_SearchRadioBox = new wxRadioBox( m_SearchPanel, ID_RADIOBOX_SEARCH, _("Search"), wxDefaultPosition, wxDefaultSize, m_SearchRadioBoxStrings, 1, wxRA_SPECIFY_COLS );
 		m_SearchRadioBox->SetSelection(0);
-		itemBoxSizer3->Add(m_SearchRadioBox, 0, wxALIGN_LEFT|wxALL, 5);
+		itemBoxSizer3->Add(m_SearchRadioBox, 0, wxALIGN_LEFT|wxALL, FromDIP(5));
 
-		itemBoxSizer3->Add(5, 3, 0, wxALIGN_CENTER_HORIZONTAL|wxALL, 5);
+		itemBoxSizer3->Add(FromDIP(5), FromDIP(3), 0, wxALIGN_CENTER_HORIZONTAL|wxALL, FromDIP(5));
 
 		m_SearchButton = new wxButton( m_SearchPanel, ID_BUTTON_SEARCH, _("Search"), wxDefaultPosition, wxDefaultSize, 0 );
 		m_SearchButton->SetDefault();
-		itemBoxSizer3->Add(m_SearchButton, 0, wxALIGN_LEFT|wxALL, 5);
+		itemBoxSizer3->Add(m_SearchButton, 0, wxALIGN_LEFT|wxALL, FromDIP(5));
 
 		m_SearchPanel->Show( false );
 	}
@@ -1061,39 +1135,37 @@ wxBitmap CMainFrame::GetBitmapResource( const wxString& name )
 {
     // Bitmap retrieval
     wxUnusedVar(name);
+    wxBitmap bitmap;
     if (name == wxT("graphics/tlb_new.xpm"))
     {
-        return GetBitmapForToolbar( tlb_new_xpm, wxART_NEW );
+        return GetBitmapForToolbar( tlb_new_xpm, wxART_NEW, this );
     }
     else if (name == wxT("graphics/tlb_open.xpm"))
     {
-        return GetBitmapForToolbar( tlb_open_xpm, wxART_FILE_OPEN );
+        return GetBitmapForToolbar( tlb_open_xpm, wxART_FILE_OPEN, this );
     }
     else if (name == wxT("graphics/tlb_catalog.png"))
     {
         wxMemoryInputStream memStream(tlb_catalog_png, sizeof(tlb_catalog_png));
-        wxBitmap bitmap(wxImage(memStream, wxBITMAP_TYPE_ANY, -1), -1);
-        return bitmap;
+        bitmap = wxBitmap(wxImage(memStream, wxBITMAP_TYPE_ANY, -1), -1);
     }
     else if (name == wxT("graphics/tlb_up.xpm"))
     {
-        return GetBitmapForToolbar( tlb_up_xpm, wxART_GO_UP );
+        return GetBitmapForToolbar( tlb_up_xpm, wxART_GO_UP, this );
     }
     else if (name == wxT("graphics/tlb_physical.xpm"))
     {
-        wxBitmap bitmap(tlb_physical_xpm);
-        return bitmap;
+        bitmap = wxBitmap(tlb_physical_xpm);
     }
     else if (name == wxT("graphics/tlb_virtual.xpm"))
     {
-        wxBitmap bitmap(tlb_virtual_xpm);
-        return bitmap;
+        bitmap = wxBitmap(tlb_virtual_xpm);
     }
     else if (name == wxT("graphics/tlb_search.xpm"))
     {
-        return GetBitmapForToolbar( tlb_search_xpm, wxART_FIND );
+        return GetBitmapForToolbar( tlb_search_xpm, wxART_FIND, this );
     }
-    return wxNullBitmap;
+    return ScaleToolbarBitmap( this, bitmap );
 }
 
 /*!
@@ -1134,10 +1206,11 @@ void CMainFrame::LoadTreeControl(void) {
 	wxYield();
 
 	wxTreeCtrl* tctl = GetTreePhysicalControl();
-	wxImageList* iml = new wxImageList( 16, 16 );
-    iml->Add( CUtils::GetIconForPane(removable_xpm, wxART_REMOVABLE) );
-    iml->Add( CUtils::GetIconForPane(folder_closed_xpm, wxART_FOLDER) );
-    iml->Add( CUtils::GetIconForPane(folder_opened_xpm, wxART_FOLDER_OPEN) );
+	const wxSize iconSize = FromDIP(wxSize(16, 16));
+	wxImageList* iml = new wxImageList( iconSize.x, iconSize.y );
+    iml->Add( CUtils::GetIconForPane(removable_xpm, wxART_REMOVABLE, iconSize) );
+    iml->Add( CUtils::GetIconForPane(folder_closed_xpm, wxART_FOLDER, iconSize) );
+    iml->Add( CUtils::GetIconForPane(folder_opened_xpm, wxART_FOLDER_OPEN, iconSize) );
 	tctl->AssignImageList( iml );
 
 	m_IgnoreTreeCtrlEvents = true;
@@ -1217,10 +1290,11 @@ void CMainFrame::LoadFolderInTreeControl( long VolumeID, wxTreeCtrl* tctl, wxTre
 void CMainFrame::LoadVirtualTreeControl(void) {
 
 	wxTreeCtrl* tctl = GetTreeVirtualControl();
-	wxImageList* iml = new wxImageList( 16, 16 );
-    iml->Add( CUtils::GetIconForPane(removable_xpm, wxART_REMOVABLE) );
-    iml->Add( CUtils::GetIconForPane(folder_closed_xpm, wxART_FOLDER) );
-    iml->Add( CUtils::GetIconForPane(folder_opened_xpm, wxART_FOLDER_OPEN) );
+	const wxSize iconSize = FromDIP(wxSize(16, 16));
+	wxImageList* iml = new wxImageList( iconSize.x, iconSize.y );
+    iml->Add( CUtils::GetIconForPane(removable_xpm, wxART_REMOVABLE, iconSize) );
+    iml->Add( CUtils::GetIconForPane(folder_closed_xpm, wxART_FOLDER, iconSize) );
+    iml->Add( CUtils::GetIconForPane(folder_opened_xpm, wxART_FOLDER_OPEN, iconSize) );
 	tctl->AssignImageList( iml );
 
 	tctl->DeleteAllItems();
@@ -1377,9 +1451,10 @@ void CMainFrame::CreateListControlHeaders(void) {
 	}
 
 	// assigns the image list
-	wxImageList* iml = new wxImageList( 16, 16 );
-	iml->Add(wxIcon(folder_closed_xpm));
-	iml->Add(wxIcon(deffile_xpm));
+	const wxSize iconSize = FromDIP(wxSize(16, 16));
+	wxImageList* iml = new wxImageList( iconSize.x, iconSize.y );
+	iml->Add( CUtils::GetIconForPane(folder_closed_xpm, wxART_FOLDER, iconSize) );
+	iml->Add( CUtils::GetIconForPane(deffile_xpm, wxART_NORMAL_FILE, iconSize) );
 	lctl->AssignImageList( iml, wxIMAGE_LIST_SMALL );
 
 	// adds a dummy row and deletes it
@@ -1540,6 +1615,8 @@ CMainFrame::~CMainFrame() {
 	GetClientSize(&w, &h);
 	GetPosition(&x, &y);
 	pConfig->SetPath(wxT("/Mainframe/Layout"));
+	// remember the DPI scale the physical layout values were saved at
+	pConfig->Write(wxT("Dpi"), GetDPIScaleFactor());
 	if( !IsMaximized() && CWindowPosition::CheckCoordinates(x, y, w, h) ) {
 		pConfig->Write(wxT("x"), (long) x);
 		pConfig->Write(wxT("y"), (long) y);
@@ -1552,6 +1629,10 @@ CMainFrame::~CMainFrame() {
 	wxSplitterWindow* sw = GetSplitterWindow();
 	pConfig->Write(wxT("SashPosition"), (long) sw->GetSashPosition() );
 
+	// column widths are stored in DIPs so they keep their apparent size when
+	// the window moves to a monitor with a different DPI
+	pConfig->Write(wxT("cwUnitsDIP"), 1L);
+
 	// saves the MRU files list
 	m_fileHistory->Save( *pConfig );
 	delete m_fileHistory;
@@ -1559,60 +1640,60 @@ CMainFrame::~CMainFrame() {
 	// saves the listview columns width
 	int k = 0;
 	pConfig->SetPath(wxT("/Mainframe/Layout/ListViewPhysical"));
-	pConfig->Write(wxT("cw0"), (long) m_ListviewColWidthPhysical[k++]);
-	pConfig->Write(wxT("cw1"), (long) m_ListviewColWidthPhysical[k++]);
-	pConfig->Write(wxT("cw2"), (long) m_ListviewColWidthPhysical[k++]);
-	pConfig->Write(wxT("cw3"), (long) m_ListviewColWidthPhysical[k++]);
-	pConfig->Write(wxT("cw4"), (long) m_ListviewColWidthPhysical[k++]);
-	pConfig->Write(wxT("cw5"), (long) m_ListviewColWidthPhysical[k++]);
-	pConfig->Write(wxT("cw6"), (long) m_ListviewColWidthPhysical[k++]);
-	pConfig->Write(wxT("cw7"), (long) m_ListviewColWidthPhysical[k++]);
-	pConfig->Write(wxT("cw8"), (long) m_ListviewColWidthPhysical[k++]);
-	pConfig->Write(wxT("cw9"), (long) m_ListviewColWidthPhysical[k++]);
-	pConfig->Write(wxT("cw10"), (long) m_ListviewColWidthPhysical[k++]);
-	pConfig->Write(wxT("cw11"), (long) m_ListviewColWidthPhysical[k++]);
-	pConfig->Write(wxT("cw12"), (long) m_ListviewColWidthPhysical[k++]);
-	pConfig->Write(wxT("cw13"), (long) m_ListviewColWidthPhysical[k++]);
-	pConfig->Write(wxT("cw14"), (long) m_ListviewColWidthPhysical[k++]);
-	pConfig->Write(wxT("cw15"), (long) m_ListviewColWidthPhysical[k++]);
+	pConfig->Write(wxT("cw0"), (long) ToDIP( m_ListviewColWidthPhysical[k++] ) );
+	pConfig->Write(wxT("cw1"), (long) ToDIP( m_ListviewColWidthPhysical[k++] ) );
+	pConfig->Write(wxT("cw2"), (long) ToDIP( m_ListviewColWidthPhysical[k++] ) );
+	pConfig->Write(wxT("cw3"), (long) ToDIP( m_ListviewColWidthPhysical[k++] ) );
+	pConfig->Write(wxT("cw4"), (long) ToDIP( m_ListviewColWidthPhysical[k++] ) );
+	pConfig->Write(wxT("cw5"), (long) ToDIP( m_ListviewColWidthPhysical[k++] ) );
+	pConfig->Write(wxT("cw6"), (long) ToDIP( m_ListviewColWidthPhysical[k++] ) );
+	pConfig->Write(wxT("cw7"), (long) ToDIP( m_ListviewColWidthPhysical[k++] ) );
+	pConfig->Write(wxT("cw8"), (long) ToDIP( m_ListviewColWidthPhysical[k++] ) );
+	pConfig->Write(wxT("cw9"), (long) ToDIP( m_ListviewColWidthPhysical[k++] ) );
+	pConfig->Write(wxT("cw10"), (long) ToDIP( m_ListviewColWidthPhysical[k++] ) );
+	pConfig->Write(wxT("cw11"), (long) ToDIP( m_ListviewColWidthPhysical[k++] ) );
+	pConfig->Write(wxT("cw12"), (long) ToDIP( m_ListviewColWidthPhysical[k++] ) );
+	pConfig->Write(wxT("cw13"), (long) ToDIP( m_ListviewColWidthPhysical[k++] ) );
+	pConfig->Write(wxT("cw14"), (long) ToDIP( m_ListviewColWidthPhysical[k++] ) );
+	pConfig->Write(wxT("cw15"), (long) ToDIP( m_ListviewColWidthPhysical[k++] ) );
 	k = 0;
 	pConfig->SetPath(wxT("/Mainframe/Layout/ListViewVirtual"));
-	pConfig->Write(wxT("cw0"), (long) m_ListviewColWidthVirtual[k++]);
-	pConfig->Write(wxT("cw1"), (long) m_ListviewColWidthVirtual[k++]);
-	pConfig->Write(wxT("cw2"), (long) m_ListviewColWidthVirtual[k++]);
-	pConfig->Write(wxT("cw3"), (long) m_ListviewColWidthVirtual[k++]);
-	pConfig->Write(wxT("cw4"), (long) m_ListviewColWidthVirtual[k++]);
-	pConfig->Write(wxT("cw5"), (long) m_ListviewColWidthVirtual[k++]);
-	pConfig->Write(wxT("cw6"), (long) m_ListviewColWidthVirtual[k++]);
-	pConfig->Write(wxT("cw7"), (long) m_ListviewColWidthVirtual[k++]);
-	pConfig->Write(wxT("cw8"), (long) m_ListviewColWidthVirtual[k++]);
-	pConfig->Write(wxT("cw9"), (long) m_ListviewColWidthVirtual[k++]);
-	pConfig->Write(wxT("cw10"), (long) m_ListviewColWidthVirtual[k++]);
-	pConfig->Write(wxT("cw11"), (long) m_ListviewColWidthVirtual[k++]);
-	pConfig->Write(wxT("cw12"), (long) m_ListviewColWidthVirtual[k++]);
-	pConfig->Write(wxT("cw13"), (long) m_ListviewColWidthVirtual[k++]);
-	pConfig->Write(wxT("cw14"), (long) m_ListviewColWidthVirtual[k++]);
-	pConfig->Write(wxT("cw15"), (long) m_ListviewColWidthVirtual[k++]);
-	pConfig->Write(wxT("cw16"), (long) m_ListviewColWidthVirtual[k++]);
+	pConfig->Write(wxT("cw0"), (long) ToDIP( m_ListviewColWidthVirtual[k++] ) );
+	pConfig->Write(wxT("cw1"), (long) ToDIP( m_ListviewColWidthVirtual[k++] ) );
+	pConfig->Write(wxT("cw2"), (long) ToDIP( m_ListviewColWidthVirtual[k++] ) );
+	pConfig->Write(wxT("cw3"), (long) ToDIP( m_ListviewColWidthVirtual[k++] ) );
+	pConfig->Write(wxT("cw4"), (long) ToDIP( m_ListviewColWidthVirtual[k++] ) );
+	pConfig->Write(wxT("cw5"), (long) ToDIP( m_ListviewColWidthVirtual[k++] ) );
+	pConfig->Write(wxT("cw6"), (long) ToDIP( m_ListviewColWidthVirtual[k++] ) );
+	pConfig->Write(wxT("cw7"), (long) ToDIP( m_ListviewColWidthVirtual[k++] ) );
+	pConfig->Write(wxT("cw8"), (long) ToDIP( m_ListviewColWidthVirtual[k++] ) );
+	pConfig->Write(wxT("cw9"), (long) ToDIP( m_ListviewColWidthVirtual[k++] ) );
+	pConfig->Write(wxT("cw10"), (long) ToDIP( m_ListviewColWidthVirtual[k++] ) );
+	pConfig->Write(wxT("cw11"), (long) ToDIP( m_ListviewColWidthVirtual[k++] ) );
+	pConfig->Write(wxT("cw12"), (long) ToDIP( m_ListviewColWidthVirtual[k++] ) );
+	pConfig->Write(wxT("cw13"), (long) ToDIP( m_ListviewColWidthVirtual[k++] ) );
+	pConfig->Write(wxT("cw14"), (long) ToDIP( m_ListviewColWidthVirtual[k++] ) );
+	pConfig->Write(wxT("cw15"), (long) ToDIP( m_ListviewColWidthVirtual[k++] ) );
+	pConfig->Write(wxT("cw16"), (long) ToDIP( m_ListviewColWidthVirtual[k++] ) );
 	k = 0;
 	pConfig->SetPath(wxT("/Mainframe/Layout/ListViewSearch"));
-	pConfig->Write(wxT("cw0"), (long) m_ListviewColWidthSearch[k++]);
-	pConfig->Write(wxT("cw1"), (long) m_ListviewColWidthSearch[k++]);
-	pConfig->Write(wxT("cw2"), (long) m_ListviewColWidthSearch[k++]);
-	pConfig->Write(wxT("cw3"), (long) m_ListviewColWidthSearch[k++]);
-	pConfig->Write(wxT("cw4"), (long) m_ListviewColWidthSearch[k++]);
-	pConfig->Write(wxT("cw5"), (long) m_ListviewColWidthSearch[k++]);
-	pConfig->Write(wxT("cw6"), (long) m_ListviewColWidthSearch[k++]);
-	pConfig->Write(wxT("cw7"), (long) m_ListviewColWidthSearch[k++]);
-	pConfig->Write(wxT("cw8"), (long) m_ListviewColWidthSearch[k++]);
-	pConfig->Write(wxT("cw9"), (long) m_ListviewColWidthSearch[k++]);
-	pConfig->Write(wxT("cw10"), (long) m_ListviewColWidthSearch[k++]);
-	pConfig->Write(wxT("cw11"), (long) m_ListviewColWidthSearch[k++]);
-	pConfig->Write(wxT("cw12"), (long) m_ListviewColWidthSearch[k++]);
-	pConfig->Write(wxT("cw13"), (long) m_ListviewColWidthSearch[k++]);
-	pConfig->Write(wxT("cw14"), (long) m_ListviewColWidthSearch[k++]);
-	pConfig->Write(wxT("cw15"), (long) m_ListviewColWidthSearch[k++]);
-	pConfig->Write(wxT("cw16"), (long) m_ListviewColWidthSearch[k++]);
+	pConfig->Write(wxT("cw0"), (long) ToDIP( m_ListviewColWidthSearch[k++] ) );
+	pConfig->Write(wxT("cw1"), (long) ToDIP( m_ListviewColWidthSearch[k++] ) );
+	pConfig->Write(wxT("cw2"), (long) ToDIP( m_ListviewColWidthSearch[k++] ) );
+	pConfig->Write(wxT("cw3"), (long) ToDIP( m_ListviewColWidthSearch[k++] ) );
+	pConfig->Write(wxT("cw4"), (long) ToDIP( m_ListviewColWidthSearch[k++] ) );
+	pConfig->Write(wxT("cw5"), (long) ToDIP( m_ListviewColWidthSearch[k++] ) );
+	pConfig->Write(wxT("cw6"), (long) ToDIP( m_ListviewColWidthSearch[k++] ) );
+	pConfig->Write(wxT("cw7"), (long) ToDIP( m_ListviewColWidthSearch[k++] ) );
+	pConfig->Write(wxT("cw8"), (long) ToDIP( m_ListviewColWidthSearch[k++] ) );
+	pConfig->Write(wxT("cw9"), (long) ToDIP( m_ListviewColWidthSearch[k++] ) );
+	pConfig->Write(wxT("cw10"), (long) ToDIP( m_ListviewColWidthSearch[k++] ) );
+	pConfig->Write(wxT("cw11"), (long) ToDIP( m_ListviewColWidthSearch[k++] ) );
+	pConfig->Write(wxT("cw12"), (long) ToDIP( m_ListviewColWidthSearch[k++] ) );
+	pConfig->Write(wxT("cw13"), (long) ToDIP( m_ListviewColWidthSearch[k++] ) );
+	pConfig->Write(wxT("cw14"), (long) ToDIP( m_ListviewColWidthSearch[k++] ) );
+	pConfig->Write(wxT("cw15"), (long) ToDIP( m_ListviewColWidthSearch[k++] ) );
+	pConfig->Write(wxT("cw16"), (long) ToDIP( m_ListviewColWidthSearch[k++] ) );
 
 	// saves the visibility state of audio metadata columns
 	pConfig->SetPath(wxT("/Mainframe/Layout"));
@@ -1804,9 +1885,10 @@ void CMainFrame::ShowFolderFiles( wxTreeItemId itemID ) {
     if( lctl == NULL ) return;
 	
 	// assigns the image list
-	wxImageList* iml = new wxImageList( 16, 16 );
-    iml->Add( CUtils::GetIconForPane(folder_closed_xpm, wxART_FOLDER) );
-    iml->Add( CUtils::GetIconForPane(deffile_xpm, wxART_NORMAL_FILE) );
+	const wxSize iconSize = FromDIP(wxSize(16, 16));
+	wxImageList* iml = new wxImageList( iconSize.x, iconSize.y );
+    iml->Add( CUtils::GetIconForPane(folder_closed_xpm, wxART_FOLDER, iconSize) );
+    iml->Add( CUtils::GetIconForPane(deffile_xpm, wxART_NORMAL_FILE, iconSize) );
 	lctl->AssignImageList( iml, wxIMAGE_LIST_SMALL );
 
     MyTreeItemData *itemData = (MyTreeItemData *) tctl->GetItemData(itemID);
@@ -1904,9 +1986,10 @@ void CMainFrame::ShowVirtualFolderFiles( wxTreeItemId itemID ) {
     if( lctl == NULL ) return;
 	
 	// assigns the image list
-	wxImageList* iml = new wxImageList( 16, 16 );
-    iml->Add( CUtils::GetIconForPane(folder_closed_xpm, wxART_FOLDER) );
-    iml->Add( CUtils::GetIconForPane(deffile_xpm, wxART_NORMAL_FILE) );
+	const wxSize iconSize = FromDIP(wxSize(16, 16));
+	wxImageList* iml = new wxImageList( iconSize.x, iconSize.y );
+    iml->Add( CUtils::GetIconForPane(folder_closed_xpm, wxART_FOLDER, iconSize) );
+    iml->Add( CUtils::GetIconForPane(deffile_xpm, wxART_NORMAL_FILE, iconSize) );
 	lctl->AssignImageList( iml, wxIMAGE_LIST_SMALL );
 
 	// retrieves info about the selected item
@@ -3029,9 +3112,10 @@ void CMainFrame::OnButtonSearchClick( wxCommandEvent& WXUNUSED(event) ) {
 	CRightPaneList* lctl = GetListControl();
 	
 	// assigns the image list
-	wxImageList* iml = new wxImageList( 16, 16 );
-	iml->Add(wxIcon(folder_closed_xpm));
-	iml->Add(wxIcon(deffile_xpm));
+	const wxSize iconSize = FromDIP(wxSize(16, 16));
+	wxImageList* iml = new wxImageList( iconSize.x, iconSize.y );
+	iml->Add( CUtils::GetIconForPane(folder_closed_xpm, wxART_FOLDER, iconSize) );
+	iml->Add( CUtils::GetIconForPane(deffile_xpm, wxART_NORMAL_FILE, iconSize) );
 	lctl->AssignImageList( iml, wxIMAGE_LIST_SMALL );
 
 	nSearchFiles = 0;

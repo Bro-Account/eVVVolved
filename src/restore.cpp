@@ -147,70 +147,70 @@ void CDialogRestore::CreateControls()
     itemDialog1->SetSizer(itemBoxSizer2);
 
     wxBoxSizer* itemBoxSizer3 = new wxBoxSizer(wxVERTICAL);
-    itemBoxSizer2->Add(itemBoxSizer3, 0, wxGROW|wxALL, 5);
+    itemBoxSizer2->Add(itemBoxSizer3, 0, wxGROW|wxALL, FromDIP(5));
 
     wxStaticText* itemStaticText4 = new wxStaticText( itemDialog1, wxID_STATIC, _("You are about to create a new catalog from a backup file.\n\nEnter the complete path to the backup file and to the catalog file that will be created.\nYou cannot enter the name of an existing catalog."), wxDefaultPosition, wxDefaultSize, 0 );
-    itemBoxSizer3->Add(itemStaticText4, 0, wxALIGN_LEFT|wxALL, 5);
+    itemBoxSizer3->Add(itemStaticText4, 0, wxALIGN_LEFT|wxALL, FromDIP(5));
 
-    itemBoxSizer3->Add(5, 5, 0, wxALIGN_CENTER_HORIZONTAL|wxALL, 5);
+    itemBoxSizer3->Add(FromDIP(5), FromDIP(5), 0, wxALIGN_CENTER_HORIZONTAL|wxALL, FromDIP(5));
 
     wxStaticText* itemStaticText6 = new wxStaticText( itemDialog1, wxID_STATIC, _("Backup file:"), wxDefaultPosition, wxDefaultSize, 0 );
-    itemBoxSizer3->Add(itemStaticText6, 0, wxALIGN_LEFT|wxALL, 5);
+    itemBoxSizer3->Add(itemStaticText6, 0, wxALIGN_LEFT|wxALL, FromDIP(5));
 
     wxBoxSizer* itemBoxSizer7 = new wxBoxSizer(wxHORIZONTAL);
-    itemBoxSizer3->Add(itemBoxSizer7, 0, wxGROW|wxRIGHT|wxTOP|wxBOTTOM, 5);
+    itemBoxSizer3->Add(itemBoxSizer7, 0, wxGROW|wxRIGHT|wxTOP|wxBOTTOM, FromDIP(5));
 
     m_BackupNameCtrl = new wxTextCtrl( itemDialog1, ID_RESTOREDIALOG_BACKUP, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
-    itemBoxSizer7->Add(m_BackupNameCtrl, 1, wxALIGN_CENTER_VERTICAL|wxALL, 5);
+    itemBoxSizer7->Add(m_BackupNameCtrl, 1, wxALIGN_CENTER_VERTICAL|wxALL, FromDIP(5));
 
     m_BrowseBackupCtrl = new wxButton( itemDialog1, ID_RESTOREDIALOG_BROWSE_BACKUP, _("..."), wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT );
-    itemBoxSizer7->Add(m_BrowseBackupCtrl, 0, wxALIGN_CENTER_VERTICAL|wxRIGHT|wxTOP|wxBOTTOM, 5);
+    itemBoxSizer7->Add(m_BrowseBackupCtrl, 0, wxALIGN_CENTER_VERTICAL|wxRIGHT|wxTOP|wxBOTTOM, FromDIP(5));
 
     wxStaticText* itemStaticText10 = new wxStaticText( itemDialog1, wxID_STATIC, _("New catalog:"), wxDefaultPosition, wxDefaultSize, 0 );
-    itemBoxSizer3->Add(itemStaticText10, 0, wxALIGN_LEFT|wxALL, 5);
+    itemBoxSizer3->Add(itemStaticText10, 0, wxALIGN_LEFT|wxALL, FromDIP(5));
 
     wxBoxSizer* itemBoxSizer11 = new wxBoxSizer(wxHORIZONTAL);
-    itemBoxSizer3->Add(itemBoxSizer11, 0, wxGROW|wxRIGHT|wxTOP|wxBOTTOM, 5);
+    itemBoxSizer3->Add(itemBoxSizer11, 0, wxGROW|wxRIGHT|wxTOP|wxBOTTOM, FromDIP(5));
 
     m_CatalogNameCtrl = new wxTextCtrl( itemDialog1, ID_RESTOREDIALOG_CATALOG, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
-    itemBoxSizer11->Add(m_CatalogNameCtrl, 1, wxALIGN_CENTER_VERTICAL|wxALL, 5);
+    itemBoxSizer11->Add(m_CatalogNameCtrl, 1, wxALIGN_CENTER_VERTICAL|wxALL, FromDIP(5));
 
     m_BrowseCatalogCtrl = new wxButton( itemDialog1, ID_RESTOREDIALOG_BROWSE_CATALOG, _("..."), wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT );
-    itemBoxSizer11->Add(m_BrowseCatalogCtrl, 0, wxALIGN_CENTER_VERTICAL|wxRIGHT|wxTOP|wxBOTTOM, 5);
+    itemBoxSizer11->Add(m_BrowseCatalogCtrl, 0, wxALIGN_CENTER_VERTICAL|wxRIGHT|wxTOP|wxBOTTOM, FromDIP(5));
 
 #if defined(__WXMSW__)
     wxBoxSizer* itemBoxSizer14 = new wxBoxSizer(wxHORIZONTAL);
-    itemBoxSizer3->Add(itemBoxSizer14, 0, wxGROW|wxTOP|wxBOTTOM, 5);
+    itemBoxSizer3->Add(itemBoxSizer14, 0, wxGROW|wxTOP|wxBOTTOM, FromDIP(5));
 
     wxButton* itemButton15 = new wxButton( itemDialog1, wxID_HELP, _("&Help"), wxDefaultPosition, wxDefaultSize, 0 );
-    itemBoxSizer14->Add(itemButton15, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5);
+    itemBoxSizer14->Add(itemButton15, 0, wxALIGN_CENTER_VERTICAL|wxALL, FromDIP(5));
 
-    itemBoxSizer14->Add(5, 5, 1, wxALIGN_CENTER_VERTICAL|wxALL, 5);
+    itemBoxSizer14->Add(FromDIP(5), FromDIP(5), 1, wxALIGN_CENTER_VERTICAL|wxALL, FromDIP(5));
 
     wxButton* itemButton17 = new wxButton( itemDialog1, wxID_OK, _("&OK"), wxDefaultPosition, wxDefaultSize, 0 );
     itemButton17->SetDefault();
-    itemBoxSizer14->Add(itemButton17, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5);
+    itemBoxSizer14->Add(itemButton17, 0, wxALIGN_CENTER_VERTICAL|wxALL, FromDIP(5));
 
     wxButton* itemButton18 = new wxButton( itemDialog1, wxID_CANCEL, _("&Cancel"), wxDefaultPosition, wxDefaultSize, 0 );
-    itemBoxSizer14->Add(itemButton18, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5);
+    itemBoxSizer14->Add(itemButton18, 0, wxALIGN_CENTER_VERTICAL|wxALL, FromDIP(5));
 
 #endif
 
 #if defined(__WXMAC__) || defined(__WXGTK__)
     wxBoxSizer* itemBoxSizer19 = new wxBoxSizer(wxHORIZONTAL);
-    itemBoxSizer3->Add(itemBoxSizer19, 0, wxGROW|wxTOP|wxBOTTOM, 5);
+    itemBoxSizer3->Add(itemBoxSizer19, 0, wxGROW|wxTOP|wxBOTTOM, FromDIP(5));
 
     wxButton* itemButton20 = new wxButton( itemDialog1, wxID_HELP, _("&Help"), wxDefaultPosition, wxDefaultSize, 0 );
-    itemBoxSizer19->Add(itemButton20, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5);
+    itemBoxSizer19->Add(itemButton20, 0, wxALIGN_CENTER_VERTICAL|wxALL, FromDIP(5));
 
-    itemBoxSizer19->Add(5, 5, 1, wxALIGN_CENTER_VERTICAL|wxALL, 5);
+    itemBoxSizer19->Add(FromDIP(5), FromDIP(5), 1, wxALIGN_CENTER_VERTICAL|wxALL, FromDIP(5));
 
     wxButton* itemButton22 = new wxButton( itemDialog1, wxID_CANCEL, _("&Cancel"), wxDefaultPosition, wxDefaultSize, 0 );
-    itemBoxSizer19->Add(itemButton22, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5);
+    itemBoxSizer19->Add(itemButton22, 0, wxALIGN_CENTER_VERTICAL|wxALL, FromDIP(5));
 
     wxButton* itemButton23 = new wxButton( itemDialog1, wxID_OK, _("&OK"), wxDefaultPosition, wxDefaultSize, 0 );
     itemButton23->SetDefault();
-    itemBoxSizer19->Add(itemButton23, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5);
+    itemBoxSizer19->Add(itemButton23, 0, wxALIGN_CENTER_VERTICAL|wxALL, FromDIP(5));
 
 #endif
 

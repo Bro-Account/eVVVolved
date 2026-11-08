@@ -185,10 +185,10 @@ void CDialogExportData::CreateControls()
     itemDialog1->SetSizer(itemBoxSizer2);
 
     wxBoxSizer* itemBoxSizer3 = new wxBoxSizer(wxVERTICAL);
-    itemBoxSizer2->Add(itemBoxSizer3, 0, wxGROW|wxALL, 5);
+    itemBoxSizer2->Add(itemBoxSizer3, 0, wxGROW|wxALL, FromDIP(5));
 
     wxStaticText* itemStaticText4 = new wxStaticText( itemDialog1, wxID_STATIC, _("Use this window to export data to a CSV file"), wxDefaultPosition, wxDefaultSize, 0 );
-    itemBoxSizer3->Add(itemStaticText4, 0, wxALIGN_LEFT|wxALL, 5);
+    itemBoxSizer3->Add(itemStaticText4, 0, wxALIGN_LEFT|wxALL, FromDIP(5));
 
     wxArrayString m_SeparatorRadioBoxStrings;
     m_SeparatorRadioBoxStrings.Add(_("Comma"));
@@ -196,11 +196,11 @@ void CDialogExportData::CreateControls()
     m_SeparatorRadioBoxStrings.Add(_("Pipe"));
     m_SeparatorRadioBox = new wxRadioBox( itemDialog1, ID_EXPORT_RADIOBOX_SEPARATOR, _("Separator"), wxDefaultPosition, wxDefaultSize, m_SeparatorRadioBoxStrings, 1, wxRA_SPECIFY_ROWS );
     m_SeparatorRadioBox->SetSelection(0);
-    itemBoxSizer3->Add(m_SeparatorRadioBox, 0, wxALIGN_LEFT|wxALL, 5);
+    itemBoxSizer3->Add(m_SeparatorRadioBox, 0, wxALIGN_LEFT|wxALL, FromDIP(5));
 
     m_IncludeHeadersCtrl = new wxCheckBox( itemDialog1, ID_EXPORT_INCLUDE_HEADERS, _("Include headers"), wxDefaultPosition, wxDefaultSize, 0 );
     m_IncludeHeadersCtrl->SetValue(true);
-    itemBoxSizer3->Add(m_IncludeHeadersCtrl, 0, wxALIGN_LEFT|wxALL, 5);
+    itemBoxSizer3->Add(m_IncludeHeadersCtrl, 0, wxALIGN_LEFT|wxALL, FromDIP(5));
 
     wxArrayString m_ExportRadioBoxStrings;
     m_ExportRadioBoxStrings.Add(_("All physical volumes"));
@@ -208,53 +208,53 @@ void CDialogExportData::CreateControls()
     m_ExportRadioBoxStrings.Add(_("Selected virtual folder"));
     m_ExportRadioBox = new wxRadioBox( itemDialog1, ID_EXPORT_RADIOBOX_EXPORT, _("Export"), wxDefaultPosition, wxDefaultSize, m_ExportRadioBoxStrings, 1, wxRA_SPECIFY_COLS );
     m_ExportRadioBox->SetSelection(0);
-    itemBoxSizer3->Add(m_ExportRadioBox, 0, wxALIGN_LEFT|wxALL, 5);
+    itemBoxSizer3->Add(m_ExportRadioBox, 0, wxALIGN_LEFT|wxALL, FromDIP(5));
 
     wxStaticText* itemStaticText8 = new wxStaticText( itemDialog1, wxID_STATIC, _("File name:"), wxDefaultPosition, wxDefaultSize, 0 );
-    itemBoxSizer3->Add(itemStaticText8, 0, wxALIGN_LEFT|wxALL, 5);
+    itemBoxSizer3->Add(itemStaticText8, 0, wxALIGN_LEFT|wxALL, FromDIP(5));
 
     wxBoxSizer* itemBoxSizer9 = new wxBoxSizer(wxHORIZONTAL);
-    itemBoxSizer3->Add(itemBoxSizer9, 0, wxGROW|wxTOP|wxBOTTOM, 5);
+    itemBoxSizer3->Add(itemBoxSizer9, 0, wxGROW|wxTOP|wxBOTTOM, FromDIP(5));
 
-    m_FileNameCtrl = new wxTextCtrl( itemDialog1, ID_EXPORT_FILENAME, wxEmptyString, wxDefaultPosition, wxSize(250, -1), 0 );
-    itemBoxSizer9->Add(m_FileNameCtrl, 1, wxALIGN_CENTER_VERTICAL|wxALL, 5);
+    m_FileNameCtrl = new wxTextCtrl( itemDialog1, ID_EXPORT_FILENAME, wxEmptyString, wxDefaultPosition, wxSize(FromDIP(250), -1), 0 );
+    itemBoxSizer9->Add(m_FileNameCtrl, 1, wxALIGN_CENTER_VERTICAL|wxALL, FromDIP(5));
 
     m_BrowseCtrl = new wxButton( itemDialog1, ID_EXPORT_BROWSE, _("..."), wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT );
-    itemBoxSizer9->Add(m_BrowseCtrl, 0, wxALIGN_CENTER_VERTICAL|wxRIGHT|wxTOP|wxBOTTOM, 5);
+    itemBoxSizer9->Add(m_BrowseCtrl, 0, wxALIGN_CENTER_VERTICAL|wxRIGHT|wxTOP|wxBOTTOM, FromDIP(5));
 
 #if defined(__WXMSW__)
     wxBoxSizer* itemBoxSizer12 = new wxBoxSizer(wxHORIZONTAL);
-    itemBoxSizer3->Add(itemBoxSizer12, 0, wxGROW|wxTOP|wxBOTTOM, 5);
+    itemBoxSizer3->Add(itemBoxSizer12, 0, wxGROW|wxTOP|wxBOTTOM, FromDIP(5));
 
     wxButton* itemButton13 = new wxButton( itemDialog1, wxID_HELP, _("&Help"), wxDefaultPosition, wxDefaultSize, 0 );
-    itemBoxSizer12->Add(itemButton13, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5);
+    itemBoxSizer12->Add(itemButton13, 0, wxALIGN_CENTER_VERTICAL|wxALL, FromDIP(5));
 
-    itemBoxSizer12->Add(5, 5, 1, wxALIGN_CENTER_VERTICAL|wxALL, 5);
+    itemBoxSizer12->Add(FromDIP(5), FromDIP(5), 1, wxALIGN_CENTER_VERTICAL|wxALL, FromDIP(5));
 
     wxButton* itemButton15 = new wxButton( itemDialog1, wxID_OK, _("&OK"), wxDefaultPosition, wxDefaultSize, 0 );
     itemButton15->SetDefault();
-    itemBoxSizer12->Add(itemButton15, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5);
+    itemBoxSizer12->Add(itemButton15, 0, wxALIGN_CENTER_VERTICAL|wxALL, FromDIP(5));
 
     wxButton* itemButton16 = new wxButton( itemDialog1, wxID_CANCEL, _("&Cancel"), wxDefaultPosition, wxDefaultSize, 0 );
-    itemBoxSizer12->Add(itemButton16, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5);
+    itemBoxSizer12->Add(itemButton16, 0, wxALIGN_CENTER_VERTICAL|wxALL, FromDIP(5));
 
 #endif
 
 #if defined(__WXMAC__) || defined(__WXGTK__)
     wxBoxSizer* itemBoxSizer17 = new wxBoxSizer(wxHORIZONTAL);
-    itemBoxSizer3->Add(itemBoxSizer17, 0, wxGROW|wxTOP|wxBOTTOM, 5);
+    itemBoxSizer3->Add(itemBoxSizer17, 0, wxGROW|wxTOP|wxBOTTOM, FromDIP(5));
 
     wxButton* itemButton18 = new wxButton( itemDialog1, wxID_HELP, _("&Help"), wxDefaultPosition, wxDefaultSize, 0 );
-    itemBoxSizer17->Add(itemButton18, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5);
+    itemBoxSizer17->Add(itemButton18, 0, wxALIGN_CENTER_VERTICAL|wxALL, FromDIP(5));
 
-    itemBoxSizer17->Add(5, 5, 1, wxALIGN_CENTER_VERTICAL|wxALL, 5);
+    itemBoxSizer17->Add(FromDIP(5), FromDIP(5), 1, wxALIGN_CENTER_VERTICAL|wxALL, FromDIP(5));
 
     wxButton* itemButton20 = new wxButton( itemDialog1, wxID_CANCEL, _("&Cancel"), wxDefaultPosition, wxDefaultSize, 0 );
-    itemBoxSizer17->Add(itemButton20, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5);
+    itemBoxSizer17->Add(itemButton20, 0, wxALIGN_CENTER_VERTICAL|wxALL, FromDIP(5));
 
     wxButton* itemButton21 = new wxButton( itemDialog1, wxID_OK, _("&OK"), wxDefaultPosition, wxDefaultSize, 0 );
     itemButton21->SetDefault();
-    itemBoxSizer17->Add(itemButton21, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5);
+    itemBoxSizer17->Add(itemButton21, 0, wxALIGN_CENTER_VERTICAL|wxALL, FromDIP(5));
 
 #endif
 

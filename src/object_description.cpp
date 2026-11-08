@@ -144,37 +144,37 @@ void CDialogObjectDescription::CreateControls()
     itemDialog1->SetSizer(itemBoxSizer2);
 
     wxStaticText* itemStaticText3 = new wxStaticText( itemDialog1, wxID_STATIC, _("Please enter the description for the following object:"), wxDefaultPosition, wxDefaultSize, 0 );
-    itemBoxSizer2->Add(itemStaticText3, 0, wxALIGN_LEFT|wxALL, 5);
+    itemBoxSizer2->Add(itemStaticText3, 0, wxALIGN_LEFT|wxALL, FromDIP(5));
 
     m_ObjectNameStatic = new wxStaticText( itemDialog1, ID_STATIC_OBJECT_NAME, _("OBJECT NAME"), wxDefaultPosition, wxDefaultSize, 0 );
-    itemBoxSizer2->Add(m_ObjectNameStatic, 0, wxALIGN_LEFT|wxALL, 5);
+    itemBoxSizer2->Add(m_ObjectNameStatic, 0, wxALIGN_LEFT|wxALL, FromDIP(5));
 
-    m_TextControl = new wxTextCtrl( itemDialog1, ID_TEXTCTRL1, wxEmptyString, wxDefaultPosition, wxSize(-1, 100), wxTE_MULTILINE );
-    itemBoxSizer2->Add(m_TextControl, 1, wxGROW|wxALL, 5);
+    m_TextControl = new wxTextCtrl( itemDialog1, ID_TEXTCTRL1, wxEmptyString, wxDefaultPosition, wxSize(-1, FromDIP(100)), wxTE_MULTILINE );
+    itemBoxSizer2->Add(m_TextControl, 1, wxGROW|wxALL, FromDIP(5));
 
 #if defined(__WXMSW__)
     wxBoxSizer* itemBoxSizer6 = new wxBoxSizer(wxHORIZONTAL);
-    itemBoxSizer2->Add(itemBoxSizer6, 0, wxALIGN_RIGHT|wxALL, 5);
+    itemBoxSizer2->Add(itemBoxSizer6, 0, wxALIGN_RIGHT|wxALL, FromDIP(5));
 
     wxButton* itemButton7 = new wxButton( itemDialog1, wxID_OK, _("&OK"), wxDefaultPosition, wxDefaultSize, 0 );
     itemButton7->SetDefault();
-    itemBoxSizer6->Add(itemButton7, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5);
+    itemBoxSizer6->Add(itemButton7, 0, wxALIGN_CENTER_VERTICAL|wxALL, FromDIP(5));
 
     wxButton* itemButton8 = new wxButton( itemDialog1, wxID_CANCEL, _("&Cancel"), wxDefaultPosition, wxDefaultSize, 0 );
-    itemBoxSizer6->Add(itemButton8, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5);
+    itemBoxSizer6->Add(itemButton8, 0, wxALIGN_CENTER_VERTICAL|wxALL, FromDIP(5));
 
 #endif
 
 #if defined(__WXMAC__) || defined(__WXGTK__)
     wxBoxSizer* itemBoxSizer9 = new wxBoxSizer(wxHORIZONTAL);
-    itemBoxSizer2->Add(itemBoxSizer9, 0, wxALIGN_RIGHT|wxALL, 5);
+    itemBoxSizer2->Add(itemBoxSizer9, 0, wxALIGN_RIGHT|wxALL, FromDIP(5));
 
     wxButton* itemButton10 = new wxButton( itemDialog1, wxID_CANCEL, _("&Cancel"), wxDefaultPosition, wxDefaultSize, 0 );
-    itemBoxSizer9->Add(itemButton10, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5);
+    itemBoxSizer9->Add(itemButton10, 0, wxALIGN_CENTER_VERTICAL|wxALL, FromDIP(5));
 
     wxButton* itemButton11 = new wxButton( itemDialog1, wxID_OK, _("&OK"), wxDefaultPosition, wxDefaultSize, 0 );
     itemButton11->SetDefault();
-    itemBoxSizer9->Add(itemButton11, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5);
+    itemBoxSizer9->Add(itemButton11, 0, wxALIGN_CENTER_VERTICAL|wxALL, FromDIP(5));
 
 #endif
 

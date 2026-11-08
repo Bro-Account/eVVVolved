@@ -275,16 +275,31 @@ wxString CUtils::ConvertSecondsToTimeString( int seconds )
 	return sl;
 }
 
-wxIcon CUtils::GetIconForPane( const char *xpm[], const wxArtID &id )
+wxIcon CUtils::GetIconForPane( const char *xpm[], const wxArtID &id, const wxSize& size )
 {
     wxIcon r;
-    wxIcon icoProv = wxArtProvider::GetIcon( id, wxART_OTHER, wxSize(16, 16) );
+    wxIcon icoProv = wxArtProvider::GetIcon( id, wxART_OTHER, size );
     if( icoProv.IsOk() ) {
     	r = icoProv;
     }
     else {
 	    wxIcon ico( xpm );
 	    r = ico;
+    }
+
+    // The art provider may ignore the requested size and the XPM fallbacks are
+    // always 16x16, so scale the icon to the DPI-dependent size ourselves.
+    if( r.IsOk() && size != wxDefaultSize &&
+        (r.GetWidth() != size.x || r.GetHeight() != size.y) ) {
+        wxBitmap bmp( r );
+        wxImage img = bmp.ConvertToImage();
+        if( img.IsOk() ) {
+            img.Rescale( size.x, size.y, wxIMAGE_QUALITY_HIGH );
+            wxIcon scaled;
+            scaled.CopyFromBitmap( wxBitmap( img ) );
+            if( scaled.IsOk() )
+                r = scaled;
+        }
     }
     return r;
 }

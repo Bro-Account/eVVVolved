@@ -84,7 +84,9 @@ class CRightPaneList;
 #define SYMBOL_CMAINFRAME_STYLE wxDEFAULT_FRAME_STYLE|wxCAPTION
 #define SYMBOL_CMAINFRAME_TITLE _("VVV")
 #define SYMBOL_CMAINFRAME_IDNAME ID_MAIN_FRAME
-#define SYMBOL_CMAINFRAME_SIZE wxSize(400, 300)
+// The real size comes from the configuration (see CMainFrame::Create); a
+// hard-coded pixel size here would be wrong on high-DPI displays.
+#define SYMBOL_CMAINFRAME_SIZE wxDefaultSize
 #define SYMBOL_CMAINFRAME_POSITION wxDefaultPosition
 #define SYMBOL_CRIGHTPANELIST_STYLE wxLC_REPORT|wxNO_BORDER
 #define SYMBOL_CRIGHTPANELIST_IDNAME ID_LIST_CONTROL

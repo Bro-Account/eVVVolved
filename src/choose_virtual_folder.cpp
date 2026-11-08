@@ -162,36 +162,36 @@ void CDialogChooseVirtualFolder::CreateControls()
     wxStaticText* itemStaticText3 = new wxStaticText( itemDialog1, wxID_STATIC, _("Please select the virtual folder that will receive the selected files and/or folders:"), wxDefaultPosition, wxDefaultSize, 0 );
     itemBoxSizer2->Add(itemStaticText3, 0, wxALIGN_LEFT|wxALL|wxADJUST_MINSIZE, 5);
 
-    m_TreeCtrl = new wxTreeCtrl( itemDialog1, ID_TREECTRL_CHOOSE, wxDefaultPosition, wxSize(-1, 300), wxTR_HAS_BUTTONS |wxTR_TWIST_BUTTONS|wxTR_NO_LINES|wxTR_HIDE_ROOT|wxTR_SINGLE|wxTR_DEFAULT_STYLE );
-    itemBoxSizer2->Add(m_TreeCtrl, 1, wxGROW|wxALL, 5);
+    m_TreeCtrl = new wxTreeCtrl( itemDialog1, ID_TREECTRL_CHOOSE, wxDefaultPosition, wxSize(-1, FromDIP(300)), wxTR_HAS_BUTTONS |wxTR_TWIST_BUTTONS|wxTR_NO_LINES|wxTR_HIDE_ROOT|wxTR_SINGLE|wxTR_DEFAULT_STYLE );
+    itemBoxSizer2->Add(m_TreeCtrl, 1, wxGROW|wxALL, FromDIP(5));
 
 #if defined(__WXMSW__)
     wxBoxSizer* itemBoxSizer5 = new wxBoxSizer(wxHORIZONTAL);
-    itemBoxSizer2->Add(itemBoxSizer5, 0, wxGROW|wxLEFT|wxRIGHT|wxBOTTOM, 5);
+    itemBoxSizer2->Add(itemBoxSizer5, 0, wxGROW|wxLEFT|wxRIGHT|wxBOTTOM, FromDIP(5));
 
-    itemBoxSizer5->Add(5, 5, 1, wxALIGN_CENTER_VERTICAL|wxALL, 5);
+    itemBoxSizer5->Add(FromDIP(5), FromDIP(5), 1, wxALIGN_CENTER_VERTICAL|wxALL, FromDIP(5));
 
     wxButton* itemButton7 = new wxButton( itemDialog1, wxID_OK, _("&OK"), wxDefaultPosition, wxDefaultSize, 0 );
     itemButton7->SetDefault();
-    itemBoxSizer5->Add(itemButton7, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5);
+    itemBoxSizer5->Add(itemButton7, 0, wxALIGN_CENTER_VERTICAL|wxALL, FromDIP(5));
 
     wxButton* itemButton8 = new wxButton( itemDialog1, wxID_CANCEL, _("&Cancel"), wxDefaultPosition, wxDefaultSize, 0 );
-    itemBoxSizer5->Add(itemButton8, 0, wxALIGN_CENTER_VERTICAL|wxLEFT|wxTOP|wxBOTTOM, 5);
+    itemBoxSizer5->Add(itemButton8, 0, wxALIGN_CENTER_VERTICAL|wxLEFT|wxTOP|wxBOTTOM, FromDIP(5));
 
 #endif
 
 #if defined(__WXMAC__) || defined(__WXGTK__)
     wxBoxSizer* itemBoxSizer9 = new wxBoxSizer(wxHORIZONTAL);
-    itemBoxSizer2->Add(itemBoxSizer9, 0, wxGROW|wxLEFT|wxRIGHT|wxBOTTOM, 5);
+    itemBoxSizer2->Add(itemBoxSizer9, 0, wxGROW|wxLEFT|wxRIGHT|wxBOTTOM, FromDIP(5));
 
-    itemBoxSizer9->Add(5, 5, 1, wxALIGN_CENTER_VERTICAL|wxALL, 5);
+    itemBoxSizer9->Add(FromDIP(5), FromDIP(5), 1, wxALIGN_CENTER_VERTICAL|wxALL, FromDIP(5));
 
     wxButton* itemButton11 = new wxButton( itemDialog1, wxID_CANCEL, _("&Cancel"), wxDefaultPosition, wxDefaultSize, 0 );
-    itemBoxSizer9->Add(itemButton11, 0, wxALIGN_CENTER_VERTICAL|wxLEFT|wxTOP|wxBOTTOM, 5);
+    itemBoxSizer9->Add(itemButton11, 0, wxALIGN_CENTER_VERTICAL|wxLEFT|wxTOP|wxBOTTOM, FromDIP(5));
 
     wxButton* itemButton12 = new wxButton( itemDialog1, wxID_OK, _("&OK"), wxDefaultPosition, wxDefaultSize, 0 );
     itemButton12->SetDefault();
-    itemBoxSizer9->Add(itemButton12, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5);
+    itemBoxSizer9->Add(itemButton12, 0, wxALIGN_CENTER_VERTICAL|wxALL, FromDIP(5));
 
 #endif
 
@@ -239,10 +239,11 @@ wxIcon CDialogChooseVirtualFolder::GetIconResource( const wxString& name )
 void CDialogChooseVirtualFolder::LoadVirtualTreeControl(void) {
 
 	wxTreeCtrl* tctl = m_TreeCtrl;
-	wxImageList* iml = new wxImageList( 16, 16 );
-    iml->Add( CUtils::GetIconForPane(removable_xpm, wxART_REMOVABLE) );
-    iml->Add( CUtils::GetIconForPane(folder_closed_xpm, wxART_FOLDER) );
-    iml->Add( CUtils::GetIconForPane(folder_opened_xpm, wxART_FOLDER_OPEN) );
+	const wxSize iconSize = FromDIP(wxSize(16, 16));
+	wxImageList* iml = new wxImageList( iconSize.x, iconSize.y );
+    iml->Add( CUtils::GetIconForPane(removable_xpm, wxART_REMOVABLE, iconSize) );
+    iml->Add( CUtils::GetIconForPane(folder_closed_xpm, wxART_FOLDER, iconSize) );
+    iml->Add( CUtils::GetIconForPane(folder_opened_xpm, wxART_FOLDER_OPEN, iconSize) );
 	tctl->AssignImageList( iml );
 	tctl->DeleteAllItems();
 
