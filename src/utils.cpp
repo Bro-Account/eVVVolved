@@ -101,11 +101,11 @@ void CUtils::MsgErr( wxString errMsg ){
 }
 
 void CUtils::MsgStderr( wxString errMsg ){
-#ifdef __WXMSW__
-	MsgErr( errMsg );
-#else
+	// This is only used by the command-line paths. On Windows the program is a
+	// GUI subsystem executable, so a message dialog would be invisible when the
+	// update is started from a script: always write to stderr instead.
 	std::cerr << wx2std( errMsg ) << "\n";
-#endif
+	std::cerr.flush();
 }
 
 void CUtils::MsgInfo( wxString infoMsg ){

@@ -2,6 +2,12 @@
 //
 #include "resource.h"
 
+// Common controls v6 (visual styles) and PerMonitorV2 DPI awareness.
+// wxWidgets ships the manifest files; including wx.rc embeds the right one.
+#define wxUSE_RC_MANIFEST 1
+#define wxUSE_DPI_AWARE_MANIFEST 2
+#include "wx/msw/wx.rc"
+
 #define APSTUDIO_READONLY_SYMBOLS
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -79,8 +85,8 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 1,5,0,4
- PRODUCTVERSION 1,5,0,4
+ FILEVERSION 1,5,0,5
+ PRODUCTVERSION 1,5,0,5
  FILEFLAGSMASK 0x17L
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -97,12 +103,12 @@ BEGIN
         BEGIN
             VALUE "CompanyName", "The VVV Team"
             VALUE "FileDescription", "VVV (Virtual Volumes View): an application to catalog removable disks"
-            VALUE "FileVersion", "1, 5, 0, 4"
+            VALUE "FileVersion", "1, 5, 0, 5"
             VALUE "InternalName", "VVV"
             VALUE "LegalCopyright", "Copyright (C) 2007-2024 The VVV Team"
             VALUE "OriginalFilename", "vvv.rc"
             VALUE "ProductName", "VVV"
-            VALUE "ProductVersion", "1, 5, 0, 4"
+            VALUE "ProductVersion", "1, 5, 0, 5"
         END
     END
     BLOCK "VarFileInfo"

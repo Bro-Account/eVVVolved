@@ -103,15 +103,15 @@ int m_ListViewSortColumn;
 // sorting order
 bool m_ListViewSortAscending;
 
-int wxCALLBACK ListControlCompareFunction( long item1, long item2, long sortData ) {
+int wxCALLBACK ListControlCompareFunction( wxIntPtr item1, wxIntPtr item2, wxIntPtr sortData ) {
 	// possible values of sortData:
 	//   0: we are in the physical view
 	//   1: we are not in the physical view
 	int retVal = 0;
 	bool inPhysicalView = (sortData == 0);
 
-	MyListItemData* itemData1 = (MyListItemData*) item1;
-	MyListItemData* itemData2 = (MyListItemData*) item2;
+	MyListItemData* itemData1 = reinterpret_cast<MyListItemData*>( item1 );
+	MyListItemData* itemData2 = reinterpret_cast<MyListItemData*>( item2 );
 
 	// make sure that folders are always listed before files
 	if( itemData1->IsFolder() && !itemData2->IsFolder() ) return -1;
@@ -1743,8 +1743,8 @@ void CMainFrame::DeleteAllListControlItems(void) {
 	wxListCtrl* lctl = GetListControl();
 	int nItems = lctl->GetItemCount();
 	for( int i = 0; i < nItems; i++ ) {
-		long itemData = lctl->GetItemData( i );
-		delete (MyListItemData*) itemData;
+		wxUIntPtr itemData = lctl->GetItemData( i );
+		delete reinterpret_cast<MyListItemData*>( itemData );
 	}
 	lctl->DeleteAllItems();
 }
@@ -1851,7 +1851,7 @@ void CMainFrame::ShowFolderFiles( wxTreeItemId itemID ) {
         }
 		lctl->SetItem( i, 4, FormatObjectDescriptionForListView(files.FileDescription) );
 		MyListItemData *itemData = new MyListItemData( files.FileID, -1, files.PathFileID.IsNull() ? 0 : (long) files.PathFileID, files.FileName, files.FileExt, files.FileSize, files.DateTime, files.IsFolder(), wxEmptyString, files.FileDescription );
-		lctl->SetItemData( i, (long) itemData );
+		lctl->SetItemPtrData( i, reinterpret_cast<wxUIntPtr>( itemData ) );
 
 		if( audioMetadataAvailable ) {
 			if( !m_CurrentlyShowingAudioMetadata )
@@ -3156,7 +3156,7 @@ int CMainFrame::AddRowToVirtualListControl( wxListCtrl* lctl, bool isFolder, wxS
 	lctl->SetItem( i, 4, physicalPath );
 	lctl->SetItem( i, 5, FormatObjectDescriptionForListView(fileDescription) );
 	MyListItemData *itemData = new MyListItemData( physicalFileID, fileID, virtualPathFileID, fileName, ext, fileSize, dateTime, isFolder, physicalPath, fileDescription );
-	lctl->SetItemData( i, (long) itemData );
+	lctl->SetItemPtrData( i, reinterpret_cast<wxUIntPtr>( itemData ) );
 	if( audioMetadataAvailable ) {
 		if( !m_CurrentlyShowingAudioMetadata )
 			CreateAudioMetadataListControlHeaders();

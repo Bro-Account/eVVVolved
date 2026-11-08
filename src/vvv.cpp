@@ -247,14 +247,18 @@ bool CVvvApp::OnInit()
 
     // command line update checks
     if( m_CLIUpdate ) {
+        // No GUI is shown in this mode: send log messages to stderr instead of
+        // a message box, so scripts can see what went wrong.
+        delete wxLog::SetActiveTarget( new wxLogStderr() );
+
         if( m_CatalogName.IsEmpty() ) {
-            CUtils::MsgErr( _("The command line asks for a volume update but the catalog name is missing") );
+            CUtils::MsgStderr( _("The command line asks for a volume update but the catalog name is missing") );
         }
         if( m_VolumeName.IsEmpty() ) {
-            CUtils::MsgErr( _("The command line asks for a volume update but the volume name is missing") );
+            CUtils::MsgStderr( _("The command line asks for a volume update but the volume name is missing") );
         }
         if( m_VolumePath.IsEmpty() ) {
-            CUtils::MsgErr( _("The command line asks for a volume update but the volume path is missing") );
+            CUtils::MsgStderr( _("The command line asks for a volume update but the volume path is missing") );
         }
     }
 
@@ -365,7 +369,25 @@ int CVvvApp::OnRun() {
 
 	if( m_CLIUpdate ) {
 		// update a volume without showing a GUI and return
-		return UpdateVolume( m_CatalogName, m_VolumeName, m_VolumePath );
+		try {
+			return UpdateVolume( m_CatalogName, m_VolumeName, m_VolumePath );
+		}
+		catch( CDataErrorException& e ) {
+			CUtils::MsgStderr( CUtils::std2wx( e.what() ) );
+			return -1;
+		}
+		catch( IBPP::Exception& e ) {
+			CUtils::MsgStderr( CUtils::std2wx( e.ErrorMessage() ) );
+			return -1;
+		}
+		catch( std::exception& e ) {
+			CUtils::MsgStderr( CUtils::std2wx( e.what() ) );
+			return -1;
+		}
+		catch( ... ) {
+			CUtils::MsgStderr( _( "An unexpected error has occurred." ) );
+			return -1;
+		}
 	}
 	
 	mainWindow->Show(true);
@@ -411,10 +433,6 @@ bool CVvvApp::OnExceptionInMainLoop() {
 
 
 int CVvvApp::UpdateVolume( wxString catalogName, wxString volumeName, wxString volumePath ) {
-
-	wxString serverName, userName, password;
-	wxMessageOutputStderr err;
-
 	if( catalogName.empty() ) {
 		CUtils::MsgStderr( _("The catalog name is missing") );
 		return -1;
@@ -432,37 +450,9 @@ int CVvvApp::UpdateVolume( wxString catalogName, wxString volumeName, wxString v
 		return -1;
 	}
 
-	//// open the database
-	//mainWindow->DBConnectionData.GetConnectionData( serverName, userName, password );
-	//CBaseDB::CreateFirebirdDatabase( serverName, catalogName, userName, password );
-	//try {
-	//	CBaseDB::GetDatabase()->Connect();
-	//}
-	//catch( CDataErrorException e ) {
-	//	switch( e.GetErrorCause()  ) {
-	//		case CDataErrorException::ecDatabaseNotFound:
-	//			err.Printf( _("Catalog not found:\n\n") + catalogName );
-	//			return -1;
-	//		case CDataErrorException::ecWrongUsernameOrPassword:
-	//			err.Printf( _("Incorrect username or password for the following database:\n\n") + catalogName );
-	//			return -1;
-	//		case CDataErrorException::ecServerNotFound:
-	//			if( mainWindow->DBConnectionData.connectToServer )
-	//				err.Printf( _("Unable to connect to the following server:\n\n") + serverName );
-	//			else
-	//				err.Printf( _("Unable to open the catalog.\nPlease note that you are not connected to a database server so you cannot open a catalog located on another computer in the network.\nIf you want to open a catalog on another computer you must connect to the database server (Tools/Options menu).") );
-	//			return -1;
-	//		default:
-	//			throw;
-	//	}
-	//}
-
-	//// check catalog version
-	//int dbVersion = CBaseDB::GetDatabase()->GetDatabaseVersion();
-	//if( dbVersion != CUtils::GetExpectedDatabaseVersion() ) {
-	//	err.Printf( _("The catalog structure needs to be upgraded but this is not possible in command line mode.\nYou need to open the catalog in standard GUI mode to automatically upgrade it.") );
-	//	return -1;
-	//}
+	// The catalog has already been opened (and, if needed, upgraded) by the
+	// CMainFrame constructor, which honours the catalog name given on the
+	// command line. Just look up the volume and update it.
 
 	// retrieve the volume ID
 	CVolumes vol;

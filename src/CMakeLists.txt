@@ -4,6 +4,13 @@
 FIND_PACKAGE(wxWidgets REQUIRED html adv core base net aui xrc qa richtext )
 INCLUDE(${wxWidgets_USE_FILE})
 
+# The data_interface headers do 'using namespace std;', which makes the C++17
+# std::byte clash with the 'byte' typedef in the Windows SDK headers. VVV does
+# not use std::byte, so disable it for MSVC.
+if(MSVC)
+  add_compile_definitions(_HAS_STD_BYTE=0)
+endif()
+
 include_directories( ${PROJECT_SOURCE_DIR}/src/ibpp/core
                      ${PROJECT_SOURCE_DIR}/src/data_interface
 ) 
@@ -115,6 +122,11 @@ if(APPLE)
 ENDIF(APPLE)
 
 add_executable( vvv WIN32 MACOSX_BUNDLE ${SRCS} )
+if( WIN32 AND MSVC )
+  # vvv.rc embeds the wxWidgets manifest (common controls v6 + DPI awareness),
+  # so the linker must not generate a second one.
+  target_link_options( vvv PRIVATE /MANIFEST:NO )
+endif()
 if(APPLE)
   # VVV.app / Contents/MacOS/VVV, as the upstream macOS releases were named
   set_target_properties( vvv PROPERTIES OUTPUT_NAME VVV )
@@ -278,6 +290,55 @@ if( UNIX )
                  DESTINATION ${RESOURCES_INTALL_PATH} )  # Contents/Resources on APPLE, see CUtils::GetDataFilesPath
 
 endif( UNIX )
+
+if( WIN32 )
+  # Windows has no install rules yet: the run folder is otherwise assembled by build.ps1.
+  # Ship the Firebird 5 embedded runtime, wxWidgets release DLLs and the data files
+  # next to vvv.exe (CUtils::GetDataFilesPath() returns the exe folder).
+  if( NOT VVV_FIREBIRD_ROOT )
+    if( CMAKE_SIZEOF_VOID_P EQUAL 8 )
+      set( _vvv_fb_arch x64 )
+    else()
+      set( _vvv_fb_arch x86 )
+    endif()
+    set( VVV_FIREBIRD_ROOT "${PROJECT_SOURCE_DIR}/../deps/firebird-5.0.4-${_vvv_fb_arch}" )
+  endif()
+
+  file( GLOB VVV_FB_ROOT_FILES
+        "${VVV_FIREBIRD_ROOT}/*.dll"
+        "${VVV_FIREBIRD_ROOT}/*.conf"
+        "${VVV_FIREBIRD_ROOT}/*.msg"
+        "${VVV_FIREBIRD_ROOT}/*.dat"
+        "${VVV_FIREBIRD_ROOT}/SECURITY5.FDB" )
+  install( FILES ${VVV_FB_ROOT_FILES} DESTINATION . )
+  install( DIRECTORY "${VVV_FIREBIRD_ROOT}/plugins"
+                     "${VVV_FIREBIRD_ROOT}/intl"
+                     "${VVV_FIREBIRD_ROOT}/tzdata"
+           DESTINATION . )
+
+  # wxWidgets runtime: the prebuilt packages keep release and debug DLLs in the
+  # same folder; debug ones have '32ud' in their name.
+  file( GLOB VVV_WX_RUNTIME_DLLS "${wxWidgets_LIB_DIR}/*_vc14x*.dll" )
+  list( FILTER VVV_WX_RUNTIME_DLLS EXCLUDE REGEX "32ud" )
+  install( FILES ${VVV_WX_RUNTIME_DLLS} DESTINATION . )
+
+  # Data files. The structure-update catalog must be the Firebird 5 (ODS 13) one.
+  install( FILES "${PROJECT_SOURCE_DIR}/VVV.fbk"
+                 "${PROJECT_SOURCE_DIR}/osx_specific/vvv-struct-update.fdb"
+                 "${PROJECT_SOURCE_DIR}/help/en/vvv.htb"
+           DESTINATION . )
+
+  file( GLOB VVV_TRANSLATIONS "${PROJECT_SOURCE_DIR}/translations/vvv-*.mo" )
+  foreach( _mo ${VVV_TRANSLATIONS} )
+    get_filename_component( _name "${_mo}" NAME_WE )   # vvv-de
+    string( SUBSTRING "${_name}" 4 -1 _lang )          # de
+    install( FILES "${_mo}" DESTINATION "languages/${_lang}" RENAME vvv.mo )
+    if( EXISTS "${PROJECT_SOURCE_DIR}/translations/${_lang}/wxstd.mo" )
+      install( FILES "${PROJECT_SOURCE_DIR}/translations/${_lang}/wxstd.mo"
+               DESTINATION "languages/${_lang}" )
+    endif()
+  endforeach()
+endif( WIN32 )
 
 if( APPLE )
   # must stay the last install rule: fixes library references, bundles wxWidgets/TagLib, signs

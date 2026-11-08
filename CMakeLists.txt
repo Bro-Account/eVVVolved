@@ -7,10 +7,18 @@ if(APPLE AND NOT CMAKE_OSX_ARCHITECTURES)
 endif()
 project (VVV)
 
+set( CMAKE_CXX_STANDARD 17 )
+set( CMAKE_CXX_STANDARD_REQUIRED ON )
+
 add_subdirectory( src ) 
 
+# Keep these in sync with CUtils::applicationVersion (src/utils.cpp) and the
+# version resource in src/vvv.rc.
 set( CPACK_PACKAGE_VERSION_MAJOR 1 )
-set( CPACK_PACKAGE_VERSION_MINOR 1 )
+set( CPACK_PACKAGE_VERSION_MINOR 5 )
 set( CPACK_PACKAGE_VERSION_PATCH 0 )
+# CPack builds CPACK_PACKAGE_VERSION from major/minor/patch only, so set the
+# full four-part version explicitly to match the application.
+set( CPACK_PACKAGE_VERSION "1.5.0.5" )
 set( CPACK_STRIP_FILES TRUE )
 include( CPack )
