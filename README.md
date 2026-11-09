@@ -80,6 +80,23 @@ runnable as-is. `build-x64/` holds the CMake build tree.
 
 Windows builds are 64-bit only since VVV 2.0.
 
+### Installer
+
+With the staged `run-x64/` folder in place, build the Windows installer with
+Inno Setup 7 (7.1.1 tested):
+
+```powershell
+& "$env:LOCALAPPDATA\Programs\Inno Setup 7\ISCC.exe" InnoSetup\vvv.iss
+```
+
+It packages the whole staged tree and installs into the native
+`C:\Program Files\VVV (Virtual Volumes View)`. Upgrading over a VVV 1.5
+installation works: the same setup identity replaces the old program entry,
+`.vvv` file associations point at the new location, user settings are kept,
+and a default-checked task deletes the retired 32-bit program folder from
+`Program Files (x86)` — its files are program files only (its uninstaller is
+deliberately not run, since it would delete the shared user settings).
+
 ## Building on macOS
 
 Requirements: macOS on Apple Silicon, Xcode command line tools, Homebrew.
@@ -98,9 +115,6 @@ bundle or macOS. The macOS release/signing workflow lives in
 
 ## Known issues
 
-- Windows: the Inno Setup installer script (`InnoSetup/vvv.iss`) is still the
-  VVV 1.5 one and installs the obsolete Firebird 2.1 runtime; it needs a rework
-  for the Firebird 5 file set. Until then, run the staged `run-<arch>` folders.
 - macOS: search and cataloging a volume have not been tested through the GUI
   of this build yet.
 - Catalog files only ever grow while the Firebird engine keeps pages allocated;

@@ -54,3 +54,7 @@ Release/
 *.swp
 *~
 claude.resume
+
+# InnoSetup compiler output
+/InnoSetup/VVV-*-Setup.exe
+/InnoSetup/*.iss.bak
