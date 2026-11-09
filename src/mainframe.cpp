@@ -4310,11 +4310,11 @@ void CMainFrame::OnFileRestoreClick( wxCommandEvent& WXUNUSED(event) )
  */
 
 // converts a file size into a compact human-readable string
-static wxString CompactHumanSize( wxULongLong size )
+static wxString CompactHumanSize( double size )
 {
-	double gb = size.ToDouble() / (1024.0 * 1024.0 * 1024.0);
-	double mb = size.ToDouble() / (1024.0 * 1024.0);
-	double kb = size.ToDouble() / 1024.0;
+	double gb = size / (1024.0 * 1024.0 * 1024.0);
+	double mb = size / (1024.0 * 1024.0);
+	double kb = size / 1024.0;
 	if( gb >= 1.0 ) return wxString::Format( wxT("%.2f GB"), gb );
 	if( mb >= 1.0 ) return wxString::Format( wxT("%.1f MB"), mb );
 	return wxString::Format( wxT("%.0f KB"), kb );
@@ -4351,6 +4351,17 @@ void CMainFrame::OnFileCompactClick( wxCommandEvent& WXUNUSED(event) )
 	if( wxFileExists( bakFile ) ) {
 		CUtils::MsgErr( _("Unable to compact: a backup of a previous compaction is still present:\n\n") + bakFile + _("\n\nDelete or move that file, then repeat the command.") );
 		return;
+	}
+
+	// the backup plus the rebuilt catalog need roughly the size of the current
+	// file, refuse in advance if the drive does not have that much space
+	double neededBytes = oldSize.ToDouble() * 2.0;
+	wxLongLong totalDisk = 0, freeDisk = 0;
+	if( neededBytes > 0 && wxGetDiskSpace( path, &totalDisk, &freeDisk ) && freeDisk > 0 ) {
+		if( freeDisk.ToDouble() < neededBytes ) {
+			CUtils::MsgErr( wxString::Format( _("Unable to compact: not enough free space in %s.\n\nAbout %s are needed, %s are available."), path.c_str(), CompactHumanSize( neededBytes ).c_str(), CompactHumanSize( freeDisk.ToDouble() ).c_str() ) );
+			return;
+		}
 	}
 
 	wxProgressDialog pd( _("Compacting the catalog"), _("Backing up the catalog, please wait..."), 100, this, wxPD_APP_MODAL | wxPD_SMOOTH );
@@ -4419,10 +4430,17 @@ void CMainFrame::OnFileCompactClick( wxCommandEvent& WXUNUSED(event) )
 		OpenDatabase( catalogName, CUtils::GetExpectedDatabaseVersion() );
 
 		if( CBaseDB::GetDatabase() != NULL ) {
-			// the compacted catalog is open: the work folder is not needed anymore
-			wxRemoveFile( backupFile );
-			wxRemoveFile( tempFile );
-			if( !wxRmDir( workDir ) )
+			// the compacted catalog is open: the work folder is not needed anymore.
+			// note that the compacted file itself has already been renamed into
+			// place, and the engine can hold the work files for a short while,
+			// so remove recursively and retry a few times
+			wxLogNull logNo;	// suppress the file-level errors of the removal
+			bool removed = wxFileName::Rmdir( workDir, wxPATH_RMDIR_RECURSIVE );
+			for( int retry = 0; !removed && retry < 5; retry++ ) {
+				wxMilliSleep( 400 );
+				removed = wxFileName::Rmdir( workDir, wxPATH_RMDIR_RECURSIVE );
+			}
+			if( !removed )
 				wxLogWarning( _("Unable to remove the temporary folder:\n\n") + workDir );
 
 			wxULongLong newSize;
@@ -4430,7 +4448,7 @@ void CMainFrame::OnFileCompactClick( wxCommandEvent& WXUNUSED(event) )
 				wxLogNull ln;
 				newSize = wxFileName::GetSize( catalogName );
 			}
-			CUtils::MsgInfo( wxString(_("Compaction completed.\n\nOld catalog size: ")) + CompactHumanSize( oldSize ) + _("\nNew catalog size: ") + CompactHumanSize( newSize ) + _("\n\nThe pre-compaction catalog has been kept as:\n") + bakFile );
+			CUtils::MsgInfo( wxString(_("Compaction completed.\n\nOld catalog size: ")) + CompactHumanSize( oldSize.ToDouble() ) + _("\nNew catalog size: ") + CompactHumanSize( newSize.ToDouble() ) + _("\n\nThe pre-compaction catalog has been kept as:\n") + bakFile );
 		}
 		else {
 			// the reopen failed: tell the user where everything is, but do not remove the work folder
