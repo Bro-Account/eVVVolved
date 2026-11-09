@@ -18,9 +18,9 @@ created by pre-2.0 versions must be converted once (see below).
   display; window and column layouts are stored DPI-independent.
 - Modernized toolchain: wxWidgets 3.2.8, TagLib 2.3, and the embedded
   database engine moved from Firebird 2.1 to **Firebird 5**.
-- Old catalogs use the Firebird 2 on-disk format and are detected early: the
-  app shows conversion instructions instead of failing cryptically (also in
-  command-line mode, which reports to `stderr` and no longer hangs).
+- Old catalogs use the Firebird 2 on-disk format and are detected early, and
+  the app can convert them itself (see below); command-line mode reports the
+  needed conversion to `stderr` and no longer hangs.
 - Scanning a folder reads it in one pass instead of one query per file, and
   long paths (>260 characters) are supported.
 - Catalog structure version stayed at 24, so catalogs created with the
@@ -34,22 +34,23 @@ self-contained `VVV.app`, old-catalog conversion inside the app.
 ## Converting catalogs from VVV 1.5 and older
 
 Old catalogs use the Firebird 2 on-disk format (ODS 11), and Firebird 5 cannot
-open it. They must be converted once; the converter writes a new catalog next
-to the old one and never modifies the original.
+open it. They must be converted once.
 
-- **Windows:** use the self-contained `catalog-converter` folder (available
-  from the [Releases page](https://github.com/Bro-Account/evvvolved/releases)).
-  It bundles every engine it needs — no installation and no network access.
-  Drag an old catalog file onto `convert-old-catalog.cmd`, or run
-  `convert-old-catalog.cmd "D:\Catalogs\drives.vvv"`. Multiple catalogs can be
-  converted in one run (several files or a wildcard like `"D:\Catalogs\*.vvv"`,
-  and several files can be dropped onto the .cmd) — one failing catalog does
-  not stop the others. It backs the old catalog
-  up with a bundled Firebird 2.5 engine (reading the original — backup and
-  verification never write to it, no byte-copy is made), restores the backup
-  with Firebird 5 (ODS 13), and compares the row counts of every table before
-  keeping the result. Plan free space for roughly the backup size plus the
-  size of the new catalog (well below the old catalog size combined).
+- **Windows / Linux:** the app converts the catalog in place. Open the old
+  catalog, answer Yes, and the app replaces the file with its new-format copy
+  while keeping the original unchanged next to it as `<name>-vvv15.vvv` (a
+  number is appended if that name is taken), so it stays usable with VVV 1.5.
+  The row counts of every table are verified before the switch; plan free
+  space for roughly the old catalog size. The old engine needed to read the
+  ODS 11 format (a trimmed Firebird 2.5: `gbak` and `isql`) is bundled in a
+  `firebird-2.5` subfolder next to the program — no installation and no
+  network access. Without that subfolder the app explains what is missing.
+- **Standalone converter (fallback):** the self-contained `catalog-converter`
+  folder remains useful for mass conversions (wildcards, drag several files
+  onto `convert-old-catalog.cmd`) and is available from the
+  [Releases page](https://github.com/Bro-Account/evvvolved/releases). It
+  bundles every engine it needs and can convert many catalogs in one run —
+  one failing catalog does not stop the others.
 - **macOS:** the app converts it in place: open the old catalog, answer Yes and
   pick a name for the new one (default `<name>-fb5.vvv`). From a source
   checkout, `scripts/migrate-catalog.sh` does the same on the command line.
@@ -111,8 +112,10 @@ bundle or macOS. The macOS release/signing workflow lives in
 Like every Firebird database, a catalog grows while data is added; space is
 reused for new records but no pages are ever returned to the file system.
 Deleting drives does not shrink the file. The proven way to rebuild it at the
-optimal size is a backup/restore cycle — exactly what the old-catalog
-converter does (the large size reductions in testing came from that rebuild).
+optimal size is a backup/restore cycle — the old-catalog conversion works this
+way (the large size reductions in testing came from that rebuild), and the
+**Compact** command in the File menu performs the same cycle on a current
+catalog.
 
 ## Security notes
 
