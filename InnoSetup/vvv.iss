@@ -21,12 +21,16 @@
 ; existing installation in place
 AppId=VVV-fu-ku-jitsu
 AppName={#AppName}
-AppVerName={#AppName} version {#AppVersion}
+; explicit name without the default "version X" formula; the explicit value
+; also keeps Inno from appending an automatic "(64-bit)" suffix, and
+; AppVersion is kept so the DisplayVersion registry value still exists
+AppVerName={#AppName} {#AppVersion}
 AppVersion={#AppVersion}
+UninstallDisplayName={#AppName} {#AppVersion}
 DefaultDirName={autopf}\{#AppName}
 ; always propose the native 64-bit location, even when a previous (32-bit,
-; x86 folder) VVV installation is detected — the old folder is retired via
-; the "delete the retired program folder" task instead of being upgraded
+; x86 folder) VVV installation is detected — its folder is removed via the
+; "delete the old program folder" task instead of being upgraded
 UsePreviousAppDir=no
 DefaultGroupName={#AppName}
 UninstallDisplayIcon={app}\{#ExeName}
@@ -50,12 +54,12 @@ ArchitecturesInstallIn64BitMode=x64compatible
 [Tasks]
 Name: desktopicon; Description: {cm:CreateDesktopIcon}
 ; offered only when VVV 1.5 is found installed (checked function below);
-; deletes its retired folder instead of running its uninstaller (which would
-; wipe the shared user settings)
-Name: deleteold; Description: {cm:DeleteOldFolder}; Flags: checkedonce; Check: OldProgramFolderFound
+; deletes its folder instead of running its uninstaller (which would wipe
+; the shared user settings). Checked by default on every run
+Name: deleteold; Description: {cm:DeleteOldFolder}; Check: OldProgramFolderFound
 
 [CustomMessages]
-DeleteOldFolder=Delete the retired VVV 1.5 program folder (it contains only program files; run its own uninstaller instead if you kept personal files in it)
+DeleteOldFolder=Remove the old VVV 1.5 program folder (it contained only program files — if you placed personal files in it, run its own uninstaller instead)
 
 [Files]
 ; the whole staged runtime tree: program + wx DLLs + VC140 CRT +
@@ -103,10 +107,10 @@ Name: ru; MessagesFile: compiler:Languages\Russian.isl
 #endif
 
 [Code]
-// returns the folder of the previous VVV installation (Inno kept the record
-// of it in its uninstall key "VVV-fu-ku-jitsu_is1"; the 1.5 installer was
-// 32-bit, so its key is looked up under HKLM32, which reaches the
-// Wow6432Node part of the registry on 64-bit Windows)
+// folder of the previous VVV 1.5 installation. Inno keeps the record in its
+// uninstall key "VVV-fu-ku-jitsu_is1"; the 1.5 installer was 32-bit, so its
+// key is looked up under HKLM32, which reaches the Wow6432Node part of the
+// registry on 64-bit Windows
 function OldProgramFolder(var sDir: string): Boolean;
 var
   sExe: string;
@@ -124,8 +128,8 @@ begin
   end;
 end;
 
-// the "retired folder" task is offered only when a previous installation
-// was found
+// the "old folder" task is offered only when a previous installation was
+// found
 function OldProgramFolderFound: Boolean;
 var
   sDir: string;
@@ -133,16 +137,38 @@ begin
   Result := OldProgramFolder(sDir) and (sDir <> ExpandConstant('{app}'));
 end;
 
-// remove the retired previous program folder before copying any file;
-// its uninstaller deliberately is NOT run: it would delete the shared user
-// settings key HKCU\Software\VVV, which the new version still uses
+// removes the uninstall record of VVV 1.5 when its program folder is gone
+// (after the folder was deleted here, or when someone removed the folder
+// manually earlier). Without this, Windows would keep showing an entry for
+// a program that no longer exists. The record is left alone when it points
+// at the folder the current setup installs into
+procedure RemoveOldUninstallRecordIfGone;
+var
+  sExe, sDir, sKey: string;
+begin
+  sKey := 'SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\VVV-fu-ku-jitsu_is1';
+  if RegQueryStringValue( HKLM32, sKey, 'UninstallString', sExe ) then begin
+    sDir := ExtractFileDir( RemoveQuotes( sExe ) );
+    if ( sDir <> ExpandConstant( '{app}' ) ) and not DirExists( sDir ) then begin
+      Log( Format( 'Removing the obsolete uninstall record: %s', [ sKey ] ) );
+      RegDeleteKeyIncludingSubkeys( HKLM32, sKey );
+    end;
+  end;
+end;
+
+// remove the old program folder before copying any file; its uninstaller
+// deliberately is NOT run: it would delete the shared user settings key
+// HKCU\Software\VVV, which the new version still uses
 procedure CurStepChanged(CurStep: TSetupStep);
 var
   sDir: string;
 begin
-  if (CurStep = ssInstall) and WizardIsTaskSelected('deleteold') then
-    if OldProgramFolder(sDir) and (sDir <> ExpandConstant('{app}')) then begin
-      Log(Format('Deleting the retired previous program folder: %s', [sDir]));
-      DelTree(sDir, True, True, True);
-    end;
+  if CurStep = ssInstall then begin
+    if WizardIsTaskSelected('deleteold') then
+      if OldProgramFolder(sDir) and (sDir <> ExpandConstant('{app}')) then begin
+        Log(Format('Removing the old VVV 1.5 program folder: %s', [sDir]));
+        DelTree(sDir, True, True, True);
+      end;
+    RemoveOldUninstallRecordIfGone;
+  end;
 end;

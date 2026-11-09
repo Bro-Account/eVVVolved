@@ -93,7 +93,7 @@ It packages the whole staged tree and installs into the native
 `C:\Program Files\VVV (Virtual Volumes View)`. Upgrading over a VVV 1.5
 installation works: the same setup identity replaces the old program entry,
 `.vvv` file associations point at the new location, user settings are kept,
-and a default-checked task deletes the retired 32-bit program folder from
+and a default-checked task removes the old 32-bit program folder from
 `Program Files (x86)` — its files are program files only (its uninstaller is
 deliberately not run, since it would delete the shared user settings).
 
