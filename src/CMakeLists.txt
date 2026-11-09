@@ -350,6 +350,24 @@ if( WIN32 )
                  "${PROJECT_SOURCE_DIR}/help/en/vvv.htb"
            DESTINATION . )
 
+  # Old-catalog conversion helper: a trimmed Firebird 2.5 (gbak + isql) in a
+  # subfolder of the program, used by the in-app conversion of VVV 1.5 (ODS 11)
+  # catalogs. Staged from deps/ when present; without it the app shows the
+  # "helper is missing" message instead of converting.
+  set( VVV_FB25_ROOT "${PROJECT_SOURCE_DIR}/../deps/firebird-2.5" CACHE PATH "Firebird 2.5 conversion helper folder" )
+  if( EXISTS "${VVV_FB25_ROOT}" )
+    file( GLOB VVV_FB25_FILES "${VVV_FB25_ROOT}/*.dll"
+                              "${VVV_FB25_ROOT}/*.exe"
+                              "${VVV_FB25_ROOT}/*.conf"
+                              "${VVV_FB25_ROOT}/*.msg"
+                              "${VVV_FB25_ROOT}/*.manifest"
+                              "${VVV_FB25_ROOT}/*.txt" )
+    install( FILES ${VVV_FB25_FILES} DESTINATION firebird-2.5 )
+    if( EXISTS "${VVV_FB25_ROOT}/intl" )
+      install( DIRECTORY "${VVV_FB25_ROOT}/intl" DESTINATION firebird-2.5 )
+    endif()
+  endif()
+
   file( GLOB VVV_TRANSLATIONS "${PROJECT_SOURCE_DIR}/translations/vvv-*.mo" )
   foreach( _mo ${VVV_TRANSLATIONS} )
     get_filename_component( _name "${_mo}" NAME_WE )   # vvv-de

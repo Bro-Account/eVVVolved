@@ -638,10 +638,20 @@ private:
 	// converts a catalog made by VVV 1.5 or older (Firebird 2) into a new catalog, leaving the old file unchanged.
 	// Returns the new catalog, or an empty string if it has not been converted
 	wxString ConvertOldCatalog( wxString fileName );
-	// asks whether to convert m_OldCatalogToConvert, converts it and opens the new catalog
+#endif
+#if defined(__WXOSX__) || defined(__WXMSW__) || defined(__WXGTK__)
+	// asks whether to convert m_OldCatalogToConvert, converts it and reopens the catalog.
+	// macOS works on a copy (script), Windows/Linux convert in place (bundled old engine)
 	void OfferOldCatalogConversion();
 	// set by OpenDatabase; offered only once the main window is on screen (no dialogs while it is being created)
 	wxString m_OldCatalogToConvert;
+#endif
+#if defined(__WXMSW__) || defined(__WXGTK__)
+	// converts an old (ODS 11) catalog in place: backs it up with the bundled old
+	// engine, rebuilds it with Firebird 5, verifies the row counts, then swaps
+	// the files (the original is kept as <name>-vvv15.vvv). Returns true when the
+	// converted catalog has been opened
+	bool ConvertOldCatalogInPlace( wxString fileName, wxString oldFile );
 #endif
 
 	// create a toolbar for the Mac version ( bitmaps are enlarged )

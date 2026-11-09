@@ -109,6 +109,10 @@ void CUtils::SetCommandLineMode( bool on ){
 	commandLineMode = on;
 }
 
+bool CUtils::IsCommandLineMode(){
+	return commandLineMode;
+}
+
 void CUtils::MsgStderr( wxString errMsg ){
 	// This is only used by the command-line paths. On Windows the program is a
 	// GUI subsystem executable, so a message dialog would be invisible when the

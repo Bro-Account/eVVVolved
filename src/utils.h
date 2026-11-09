@@ -58,6 +58,7 @@ public:
 	// true when running a command-line update: MsgErr writes to stderr instead
 	// of showing a message box that a script could not dismiss
 	static void SetCommandLineMode( bool on );
+	static bool IsCommandLineMode();
 
 	// displays an error message to stderr if available, otherwise uses a message box
 	static void MsgStderr( wxString errMsg );

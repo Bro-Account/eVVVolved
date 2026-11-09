@@ -1063,14 +1063,12 @@ void CMainFrame::CreateControls()
 	// Cmd-, opens the settings, as in every macOS app (the menu item is created in the DialogBlocks section)
 	GetMenuBar()->FindItem( wxID_PREFERENCES )->SetItemLabel( _("&Options...") + wxT("\tCtrl+,") );
 #endif
-#ifdef __WXOSX__
-	// an old catalog opened at startup is offered for conversion when the main window appears
+// an old catalog opened at startup is offered for conversion when the main window appears
 	Bind( wxEVT_SHOW, [this]( wxShowEvent& event ) {
 		event.Skip();
 		if( event.IsShown() && !m_OldCatalogToConvert.empty() )
 			CallAfter( &CMainFrame::OfferOldCatalogConversion );
 	} );
-#endif
 
 	// creates the tree control used to show virtual folders
 	// this control must be created in the same way as the tree control created above
@@ -2357,15 +2355,14 @@ void CMainFrame::OpenDatabase( wxString fileName, int expectedVersion ) {
 				errorOpeningDB = true;
 				break;
 			case CDataErrorException::ecWrongODS:
-#ifdef __WXOSX__
-				// convert-old-catalog.sh runs the old Firebird 2 engine (x86_64: natively on Intel, under Rosetta on Apple silicon)
-				// Never asked from here: at startup this runs while the main frame is being created (see wxEVT_SHOW)
-				if( !DBConnectionData.connectToServer ) {
+				// The conversion is offered once the main frame is on screen (see wxEVT_SHOW):
+				// never ask from here, this runs while the main frame is being created.
+				// Command-line mode never asks: it keeps the informational message below.
+				if( !DBConnectionData.connectToServer && !CUtils::IsCommandLineMode() ) {
 					m_OldCatalogToConvert = fileName;
 					errorOpeningDB = true;
 					break;
 				}
-#endif
 				CUtils::MsgErr( _("This catalog has been created with VVV 1.5 or older and must be converted before this version can open it:\n\n") + fileName + _("\n\nHow to convert it: https://github.com/Bro-Account/evvvolved\nThe original file is not modified.") );
 				errorOpeningDB = true;
 				break;
@@ -2385,11 +2382,9 @@ void CMainFrame::OpenDatabase( wxString fileName, int expectedVersion ) {
 			LoadTreeControl();
 			LoadVirtualTreeControl();
 			DeleteAllListControlItems();
-#ifdef __WXOSX__
 			// posted only now: LoadTreeControl() yields, and the conversion must not run in the middle of this cleanup
 			if( !m_OldCatalogToConvert.empty() && IsShown() )
 				CallAfter( &CMainFrame::OfferOldCatalogConversion );
-#endif
 			return;
 		}
 	}
@@ -3999,12 +3994,17 @@ void CMainFrame::OnFileExportUpdate( wxUpdateUIEvent& event )
 }
 
 
-#ifdef __WXOSX__
+#if defined(__WXMSW__) || defined(__WXGTK__)
+// the backup name shown in the conversion dialog; defined further below
+static wxString OldCatalogUniqueName( const wxString& fileName );
+#endif
+
 void CMainFrame::OfferOldCatalogConversion() {
 
 	wxString fileName = m_OldCatalogToConvert;
 	m_OldCatalogToConvert = wxEmptyString;
 	if( fileName.empty() ) return;
+#ifdef __WXOSX__
 	wxString msg = _("This catalog has been created with VVV 1.5 or older and must be converted before this version can open it:\n\n") + fileName + _("\n\nDo you want to convert it into a new catalog now? The original file is not modified.\n\nThe first conversion downloads VVV 1.5 from SourceForge (about 30 MB) to read the old format.");
 #ifdef __arm64__
 	msg += _(" Its database engine is for Intel Macs, so this Mac needs Rosetta.");
@@ -4014,8 +4014,17 @@ void CMainFrame::OfferOldCatalogConversion() {
 	wxString newFile = ConvertOldCatalog( fileName );
 	if( !newFile.empty() )
 		OpenDatabase( newFile, CUtils::GetExpectedDatabaseVersion() );
+#else
+	// the concrete new name of the old catalog is shown in the ask dialog
+	wxString oldFile = OldCatalogUniqueName( fileName );
+	wxString msg = _("This catalog has been created with VVV 1.5 or older and cannot be opened by this version:\n\n") + fileName + _("\n\nDo you want to convert it to the new format now?\n\nThe converted catalog will replace the old one in place. The original catalog is kept unchanged as\n") + oldFile + _("\nso it can still be opened with VVV 1.5.");
+	if( !CUtils::MsgAskYes( msg ) )
+		return;
+	ConvertOldCatalogInPlace( fileName, oldFile );
+#endif
 }
 
+#ifdef __WXOSX__
 wxString CMainFrame::ConvertOldCatalog( wxString fileName ) {
 
 	wxFileName fn( fileName );
@@ -4469,6 +4478,243 @@ void CMainFrame::OnFileCompactClick( wxCommandEvent& WXUNUSED(event) )
 		return;
 	}
 }
+
+
+
+#if defined(__WXMSW__) || defined(__WXGTK__)
+// builds a quoted command line of a helper tool call
+static wxString HelperCommand( const wxChar* const* args )
+{
+	wxString cmd;
+	for( int i = 0; args[i] != NULL; i++ ) {
+		if( !cmd.empty() ) cmd += wxT(" ");
+		cmd += wxT("\"") + wxString( args[i] ) + wxT("\"");
+	}
+	return cmd;
+}
+
+// returns a unique name for the old catalog next to fileName:
+// <name>-vvv15.vvv, then <name>-vvv15 (2).vvv, (3), ...
+static wxString OldCatalogUniqueName( const wxString& fileName )
+{
+	wxFileName fn( fileName );
+	wxString path = fn.GetPath( wxPATH_GET_VOLUME | wxPATH_GET_SEPARATOR );
+	wxString oldFile = path + fn.GetName() + wxT("-vvv15.vvv");
+	if( !wxFileExists( oldFile ) ) return oldFile;
+	for( int i = 2; ; i++ ) {
+		wxString candidate = path + fn.GetName() + wxString::Format( wxT("-vvv15 (%d).vvv"), i );
+		if( !wxFileExists( candidate ) ) return candidate;
+	}
+}
+
+// locates a tool (gbak, isql) of the bundled old-engine helper folder, which is
+// next to the application: <data>/firebird-2.5/gbak(.exe), or the layout of a
+// Linux Firebird tarball: <data>/firebird-2.5/bin/gbak
+static wxString OldCatalogHelperTool( const wxString& helperDir, const wxString& tool )
+{
+	wxString sep = wxString( wxFileName::GetPathSeparator() );
+#ifdef __WXMSW__
+	wxString ext = wxT(".exe");
+#else
+	wxString ext = wxEmptyString;
+#endif
+	wxString p = helperDir + sep + tool + ext;
+	if( wxFileExists( p ) ) return p;
+	return helperDir + sep + wxT("bin") + sep + tool + ext;
+}
+
+// returns the number of the last output line that contains nothing but digits,
+// or -1 when the output has no such line (the table does not exist or isql failed)
+static wxLongLong ParseIsqlCount( const wxString& outFile )
+{
+	wxTextFile tf;
+	if( !tf.Open( outFile ) ) return -1;
+	wxLongLong count = -1;
+	for( size_t i = 0; i < tf.GetLineCount(); i++ ) {
+		wxString line = tf[i].Trim( true ).Trim( false );
+		if( line.empty() ) continue;
+		bool digitsOnly = true;
+		for( size_t c = 0; c < line.Length(); c++ ) {
+			if( line[c] < wxT('0') || line[c] > wxT('9') ) {
+				digitsOnly = false;
+				break;
+			}
+		}
+		if( digitsOnly ) count = wxAtoi( line );
+	}
+	return count;
+}
+
+// converts an old (ODS 11) catalog in place, replacing it with a Firebird 5
+// catalog; the original is kept under oldFile (a unique <name>-vvv15... name
+// computed by the caller), so VVV 1.5 can still open it. The old engine that
+// reads the ODS 11 file is a helper folder next to the application. Returns
+// true when the catalog has been converted and reopened
+bool CMainFrame::ConvertOldCatalogInPlace( wxString fileName, wxString oldFile )
+{
+	wxString dataDir = CUtils::GetDataFilesPath();
+	if( !dataDir.EndsWith( wxFileName::GetPathSeparator() ) )
+		dataDir += wxFileName::GetPathSeparator();
+	wxString helperDir = dataDir + wxT("firebird-2.5");
+	wxString gbakExe = OldCatalogHelperTool( helperDir, wxT("gbak") );
+	wxString isqlExe = OldCatalogHelperTool( helperDir, wxT("isql") );
+	if( !wxFileExists( gbakExe ) || !wxFileExists( isqlExe ) ) {
+		CUtils::MsgErr( _("Unable to convert: the conversion helper is missing in the program folder:\n\n") + helperDir + _("\n\nUnless the program was installed incompletely, convert the catalog with the standalone converter, or on a machine where an installation with the helper folder is available.") );
+		return false;
+	}
+
+	// sizes and names of all the involved files
+	wxULongLong oldSize;
+	{
+		wxLogNull ln;
+		oldSize = wxFileName::GetSize( fileName );
+	}
+	wxFileName catFn( fileName );
+	wxString path = catFn.GetPath( wxPATH_GET_VOLUME | wxPATH_GET_SEPARATOR );
+	wxString baseName = catFn.GetName();
+	wxString sep = wxString( wxFileName::GetPathSeparator() );
+	wxString workDir = path + baseName + wxT("-convert-") + wxDateTime::Now().Format( wxT("%Y%m%d-%H%M%S") );
+
+	// the backup plus the rebuilt catalog need roughly the size of the old
+	// catalog; refuse in advance if the drive does not have that much space.
+	// skipped when the drive does not report a usable free value
+	double neededBytes = oldSize.ToDouble() * 2.0;
+	wxLongLong totalDisk = 0, freeDisk = 0;
+	if( neededBytes > 0 && wxGetDiskSpace( path, &totalDisk, &freeDisk ) && freeDisk > 0 ) {
+		if( freeDisk.ToDouble() < neededBytes ) {
+			CUtils::MsgErr( wxString::Format( _("Unable to convert: not enough free space in %s.\n\nAbout %s are needed, %s are available."), path.c_str(), CompactHumanSize( neededBytes ).c_str(), CompactHumanSize( freeDisk.ToDouble() ).c_str() ) );
+			return false;
+		}
+	}
+
+	wxProgressDialog pd( _("Converting the catalog"), _("Backing up the old catalog, please wait..."), 100, this, wxPD_APP_MODAL | wxPD_SMOOTH );
+
+	// on failure: state of the original file
+	bool originalRenamed = false;
+
+	try {
+		if( !wxFileName::Mkdir( workDir ) )
+			throw wxString( _("Unable to create the temporary folder:\n\n") + workDir );
+
+		wxString serverName, userName, password;
+		DBConnectionData.GetConnectionData( serverName, userName, password );
+		wxString backupFile = workDir + sep + wxT("convert.fbk");
+		wxString tempFile = workDir + sep + baseName + wxT("-fb5.vvv");
+
+		// backup the old catalog with the bundled old engine; the source is only
+		// read, the output goes into the temporary work folder
+		pd.Pulse( _("Backing up the old catalog, please wait...") );
+		const wxChar* gbakArgs[] = {
+			gbakExe.c_str(), wxT("-b"), wxT("-g"),
+			fileName.c_str(), backupFile.c_str(),
+			wxT("-user"), wxT("SYSDBA"), wxT("-password"), wxT("masterkey"), NULL
+		};
+		wxArrayString backupOutput, backupErrors;
+		long rc = wxExecute( HelperCommand( gbakArgs ), backupOutput, backupErrors, wxEXEC_SYNC | wxEXEC_HIDE_CONSOLE );
+		if( rc != 0 || !wxFileExists( backupFile ) ) {
+			wxString log;
+			for( size_t i = 0; i < backupOutput.size(); i++ ) log += backupOutput[i] + wxT("\n");
+			for( size_t i = 0; i < backupErrors.size(); i++ ) log += backupErrors[i] + wxT("\n");
+			throw wxString( wxString(_("Unable to backup the old catalog. The original file has not been modified.\n\n")) + log.Right(1500) );
+		}
+
+		// restore the backup with the current engine into a temporary file
+		pd.Pulse( _("Rebuilding the catalog, please wait...") );
+		CBaseDB::CreateFirebirdDatabaseOnDisk( serverName, userName, password, backupFile, tempFile );
+		NormalizeRestoredFileName( tempFile );
+
+		// verify that the rebuilt catalog contains the same data: compare the
+		// row counts of every table. The old counts are read with the helper
+		// isql out of the original file; if isql produces no count for a table
+		// (a very old catalog without that table, or an error) the counts do
+		// not match, like in the standalone converter
+		pd.Pulse( _("Verifying the catalog, please wait...") );
+		IBPP::Database newDb = IBPP::DatabaseFactory( CUtils::wx2std(serverName), CUtils::wx2std(tempFile), CUtils::wx2std(userName), CUtils::wx2std(password) );
+		newDb->Connect();
+		wxString mismatch = wxEmptyString;
+		for( unsigned int i = 0; i < sizeof(CompactTables) / sizeof(CompactTables[0]); i++ ) {
+			wxString sqlFile = workDir + sep + wxT("count.sql");
+			wxString outFile = workDir + sep + wxT("count.out");
+			{
+				wxFFile sql( sqlFile, wxT("w") );
+				sql.Write( wxString( wxT("select count(*) as N from ") ) + CompactTables[i] + wxT(";\nquit;\n") );
+			}
+			const wxChar* isqlArgs[] = {
+				isqlExe.c_str(), wxT("-q"),
+				wxT("-user"), wxT("SYSDBA"), wxT("-password"), wxT("masterkey"),
+				fileName.c_str(), wxT("-i"), sqlFile.c_str(), wxT("-o"), outFile.c_str(), NULL
+			};
+			wxExecute( HelperCommand( isqlArgs ), wxEXEC_SYNC | wxEXEC_HIDE_CONSOLE );
+			wxLongLong nOld = ParseIsqlCount( outFile );
+			wxRemoveFile( outFile );
+
+			wxLongLong nNew = CompactCountRows( newDb, CompactTables[i] );
+			if( nOld == -1 || nOld != nNew )
+				mismatch += wxString(wxT("\n    ")) + CompactTables[i] + wxT(": ") + (nOld == -1 ? wxString(wxT("(missing)")) : nOld.ToString()) + wxT(" / ") + nNew.ToString();
+			wxRemoveFile( sqlFile );
+		}
+		newDb->Disconnect();
+
+		if( !mismatch.empty() )
+			throw wxString( _("Conversion failed: the row counts of the rebuilt catalog do not match the old one. Nothing was replaced.") + mismatch );
+
+		// swap the files: the old catalog gets a unique <name>-vvv15.vvv name, so
+		// VVV 1.5 can still open it, and the converted file takes the old name
+		if( !wxRenameFile( fileName, oldFile, false ) )
+			throw wxString( wxString(_("Unable to rename the old catalog to:\n\n")) + oldFile + _("\n\nNothing has been removed: the catalog file is unchanged.") );
+		originalRenamed = true;
+
+		if( !wxRenameFile( tempFile, fileName, false ) ) {
+			// put the original back in place
+			if( !wxRenameFile( oldFile, fileName, false ) )
+				throw wxString( wxString(_("Unable to return the old catalog into place after a failed rename:\n\n")) + oldFile + _("\n\nPlease rename it by hand, then reopen the catalog.") );
+			originalRenamed = false;
+			throw wxString( wxString(_("Unable to rename the converted catalog into place:\n\n")) + fileName + _("\n\nThe old catalog has been left in place, unchanged.") );
+		}
+		originalRenamed = false;	// the converted file is now the catalog
+
+		// open the converted catalog and rebuild the UI
+		pd.Pulse( _("Opening the catalog, please wait...") );
+		OpenDatabase( fileName, CUtils::GetExpectedDatabaseVersion() );
+
+		if( CBaseDB::GetDatabase() != NULL ) {
+			// the opened catalog is the converted one: the work folder is not
+			// needed anymore. The engine can hold the work files for a short
+			// while, so remove recursively and retry a few times
+			wxLogNull logNo;	// suppress the file-level errors of the removal
+			bool removed = wxFileName::Rmdir( workDir, wxPATH_RMDIR_RECURSIVE );
+			for( int retry = 0; !removed && retry < 5; retry++ ) {
+				wxMilliSleep( 400 );
+				removed = wxFileName::Rmdir( workDir, wxPATH_RMDIR_RECURSIVE );
+			}
+			if( !removed )
+				wxLogWarning( _("Unable to remove the temporary folder:\n\n") + workDir );
+
+			wxULongLong newSize;
+			{
+				wxLogNull ln;
+				newSize = wxFileName::GetSize( fileName );
+			}
+			CUtils::MsgInfo( wxString(_("Conversion completed.\n\nOld catalog size: ")) + CompactHumanSize( oldSize.ToDouble() ) + _("\nNew catalog size: ") + CompactHumanSize( newSize.ToDouble() ) + _("\n\nThe old catalog has been kept as:\n") + oldFile + _("\n\nand can still be opened with VVV 1.5.") );
+		}
+		else {
+			// the reopen failed: tell the user where everything is, but do not remove the work folder
+			CUtils::MsgErr( wxString(_("The catalog has been converted but the program was unable to reopen it.\n\nThe converted catalog is at:\n")) + fileName + _("\n\nThe old catalog has been kept as:\n") + oldFile );
+		}
+	}
+	catch( wxString& msg ) {
+		if( originalRenamed )
+			wxRenameFile( oldFile, fileName, false );
+		CUtils::MsgErr( msg );
+	}
+	catch( IBPP::Exception& e ) {
+		if( originalRenamed )
+			wxRenameFile( oldFile, fileName, false );
+		CUtils::MsgErr( _("Conversion failed. The original catalog has been left in place, unchanged.\n\n") + wxString( e.what(), wxConvLocal ) );
+	}
+	return true;
+}
+#endif
 
 /*!
  * wxEVT_UPDATE_UI event handler for ID_FILE_COMPACT
