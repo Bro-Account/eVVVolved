@@ -1,0 +1,19 @@
+This program (VVV) is distributed together with the Microsoft Visual C++
+2015-2022 Redistributable runtime libraries (vcruntime140.dll,
+vcruntime140_1.dll, msvcp140.dll, msvcp140_1.dll, and the Firebird 2.5
+conversion helper's msvcr80.dll/msvcp80.dll).
+
+These files are Microsoft's Visual C++ Redistributables for Visual Studio.
+Microsoft permits distributing them together with applications built with
+the matching Visual Studio versions; they remain subject to Microsoft's
+license terms for the Visual Studio Redistributables. The terms are
+described here:
+
+  https://learn.microsoft.com/en-us/cpp/windows/redistributing-visual-cpp-files
+
+If you distribute this program, you must not install or host these runtime
+files standalone; redistribute them only as part of this program's own
+supported distribution (the Windows installer or portable folder). Microsoft
+offers a full redistributable package for download at:
+
+  https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist

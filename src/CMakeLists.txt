@@ -368,6 +368,12 @@ if( WIN32 )
     endif()
   endif()
 
+  # License texts of the program itself (COPYING) and of every redistributed
+  # third-party component; see licenses/THIRD-PARTY-LICENSES.md in the source
+  file( GLOB VVV_LICENSE_FILES "${PROJECT_SOURCE_DIR}/licenses/*" )
+  install( FILES ${VVV_LICENSE_FILES} DESTINATION licenses )
+  install( FILES "${PROJECT_SOURCE_DIR}/COPYING" DESTINATION licenses )
+
   file( GLOB VVV_TRANSLATIONS "${PROJECT_SOURCE_DIR}/translations/vvv-*.mo" )
   foreach( _mo ${VVV_TRANSLATIONS} )
     get_filename_component( _name "${_mo}" NAME_WE )   # vvv-de
