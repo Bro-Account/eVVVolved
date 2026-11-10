@@ -14,5 +14,5 @@ else
   export LD_LIBRARY_PATH=./firebird
   export FIREBIRD=.
 fi
-exec ./vvv
+exec ./vvv "$@"
 
