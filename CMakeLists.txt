@@ -10,6 +10,13 @@ project (VVV)
 set( CMAKE_CXX_STANDARD 17 )
 set( CMAKE_CXX_STANDARD_REQUIRED ON )
 
+# MSVC: let cl.exe compile several translation units in parallel (/MP). The
+# dependency chain of the targets is mostly serial, so most of the wall time
+# is spent compiling inside one project — without this only one core works.
+if(MSVC)
+  add_compile_options( /MP )
+endif()
+
 add_subdirectory( src ) 
 
 # Keep these in sync with CUtils::applicationVersion (src/utils.cpp) and the
