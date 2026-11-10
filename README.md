@@ -21,8 +21,9 @@ created by pre-2.0 versions must be converted once (see below).
 - Old catalogs use the Firebird 2 on-disk format and are detected early, and
   the app can convert them itself (see below); command-line mode reports the
   needed conversion to `stderr` and no longer hangs.
-- Scanning a folder reads it in one pass instead of one query per file, and
-  long paths (>260 characters) are supported.
+- Scanning a folder reads it in one pass instead of two (the old code walked
+  every directory twice, once for files and once for subfolders), and long
+  paths beyond the 260-character Windows limit are supported.
 - Fresh icon set: the toolbar and tree/list icons are Microsoft
   [Fluent UI System Icons](https://github.com/microsoft/fluentui-system-icons)
   in consistent outline style (blue-accent catalog disc).
