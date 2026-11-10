@@ -66,10 +66,7 @@
 ////@begin XPM images
 ////@end XPM images
 
-#include "graphics/folder_closed.xpm"
-#include "graphics/folder_opened.xpm"
-#include "graphics/removable.xpm"
-#include "graphics/deffile.xpm"
+#include "graphics2/tree_png.inc"
 
 /*!
  * CDialogChooseVirtualFolder type definition
@@ -241,9 +238,9 @@ void CDialogChooseVirtualFolder::LoadVirtualTreeControl(void) {
 	wxTreeCtrl* tctl = m_TreeCtrl;
 	const wxSize iconSize = FromDIP(wxSize(16, 16));
 	wxImageList* iml = new wxImageList( iconSize.x, iconSize.y );
-    iml->Add( CUtils::GetIconForPane(removable_xpm, wxART_REMOVABLE, iconSize) );
-    iml->Add( CUtils::GetIconForPane(folder_closed_xpm, wxART_FOLDER, iconSize) );
-    iml->Add( CUtils::GetIconForPane(folder_opened_xpm, wxART_FOLDER_OPEN, iconSize) );
+    iml->Add( CUtils::GetIconForPane(removable_16_png, sizeof(removable_16_png), removable_24_png, sizeof(removable_24_png), removable_32_png, sizeof(removable_32_png), wxART_REMOVABLE, iconSize) );
+    iml->Add( CUtils::GetFolderIconForPane(wxART_FOLDER, iconSize, CUtils::FolderIconColorFromConfig()) );
+    iml->Add( CUtils::GetFolderIconForPane(wxART_FOLDER_OPEN, iconSize, CUtils::FolderIconColorFromConfig()) );
 	tctl->AssignImageList( iml );
 	tctl->DeleteAllItems();
 

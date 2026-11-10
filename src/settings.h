@@ -35,6 +35,7 @@
 #include "wx/propdlg.h"
 #include "wx/valgen.h"
 #include "wx/spinctrl.h"
+#include "wx/clrpicker.h"
 ////@end includes
 #include "mainframe.h"
 #include "window_position.h"
@@ -45,6 +46,8 @@
 
 ////@begin forward declarations
 class wxSpinCtrl;
+class wxColourPickerCtrl;
+class wxStaticBitmap;
 ////@end forward declarations
 
 /*!
@@ -109,6 +112,12 @@ public:
     /// wxEVT_UPDATE_UI event handler for ID_DS_TEST_CONNECTION
     void OnDsTestConnectionUpdate( wxUpdateUIEvent& event );
 
+    /// wxEVT_COLOURPICKER_CHANGED event handler for ID_DS_FOLDERCOLOR
+    void OnDsFolderColorChanged( wxColourPickerEvent& event );
+
+    /// rebuilds the small folder preview bitmap in the current color
+    void UpdateFolderColorPreview();
+
 ////@end CDialogSettings event handler declarations
 
 ////@begin CDialogSettings member function declarations
@@ -150,11 +159,16 @@ public:
     int GetAppearance() const { return m_Appearance ; }
     void SetAppearance(int value) { m_Appearance = value ; }
 
+    const wxColour& GetFolderColor() const { return m_FolderColor ; }
+    void SetFolderColor(const wxColour& value) { m_FolderColor = value ; }
+
     /// Should we show tooltips?
     static bool ShowToolTips();
 
 ////@begin CDialogSettings member variables
     wxSpinCtrl* m_BeepTimeCtrl;
+    wxColourPickerCtrl* m_FolderColorCtrl;
+    wxStaticBitmap* m_FolderColorPreview;
     wxCheckBox* m_chkCatalogAudioMetadata;
     wxCheckBox* m_chkArtist;
     wxCheckBox* m_chkAlbum;
@@ -205,11 +219,15 @@ private:
         ID_DS_SERVERNAME = 10065,
         ID_DS_USERNAME = 10066,
         ID_DS_PASSWORD = 10067,
-        ID_DS_TEST_CONNECTION = 10068
+        ID_DS_TEST_CONNECTION = 10068,
+        ID_DS_FOLDERCOLOR = 10069
     };
 ////@end CDialogSettings member variables
 
     int m_Appearance;  // 0 = system, 1 = light, 2 = dark
+
+    // color of the folder icons (picker on the General page)
+    wxColour m_FolderColor;
 
 	bool TransferDataToWindow();
 	bool TransferDataFromWindow();

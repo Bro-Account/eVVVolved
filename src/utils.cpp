@@ -28,6 +28,11 @@
 #include <wx/stdpaths.h>
 #include <wx/filename.h>
 #include <wx/filefn.h>
+#include <wx/mstream.h>
+#include <wx/config.h>
+
+// the folder line/fill masks live here (see GetFolderIconForPane)
+#include "graphics2/tree_png.inc"
 #include <vector>
 #include <iostream>
 
@@ -404,6 +409,129 @@ wxIcon CUtils::GetIconForPane( const char *xpm[], const wxArtID &id, const wxSiz
         }
     }
     return r;
+}
+
+wxIcon CUtils::GetIconForPane( const unsigned char *png16, size_t png16Size,
+                               const unsigned char *png24, size_t png24Size,
+                               const unsigned char *png32, size_t png32Size,
+                               const wxArtID &id, const wxSize& size )
+{
+    wxIcon r;
+
+    // picks the artwork with the next size for the requested size, like the
+    // toolbar bitmaps: 16px at 100% DPI, 24px at 150%, 32px for higher steps
+    const unsigned char *data = NULL;
+    size_t dataSize = 0;
+    if( size != wxDefaultSize ) {
+        const int need = size.x > size.y ? size.x : size.y;
+        if( need > 24 && png32 != NULL ) { data = png32; dataSize = png32Size; }
+        else if( need > 16 && png24 != NULL ) { data = png24; dataSize = png24Size; }
+        else if( png16 != NULL ) { data = png16; dataSize = png16Size; }
+    }
+
+    if( data != NULL ) {
+        wxMemoryInputStream stream( data, dataSize );
+        wxImage img( stream, wxBITMAP_TYPE_PNG );
+        if( img.IsOk() ) {
+            // same scaling treatment as the XPM variant: real alpha, then
+            // high-quality rescale to the DPI-dependent image-list size
+            CUtils::PrepareImageForRescale( img );
+            if( size != wxDefaultSize &&
+                (img.GetWidth() != size.x || img.GetHeight() != size.y) )
+                img.Rescale( size.x, size.y, wxIMAGE_QUALITY_HIGH );
+            r.CopyFromBitmap( wxBitmap( img ) );
+        }
+    }
+
+    // fall back to the standard art provider when the artwork cannot be used
+    if( !r.IsOk() ) {
+        wxIcon icoProv = wxArtProvider::GetIcon( id, wxART_OTHER, size );
+        if( icoProv.IsOk() )
+            r = icoProv;
+    }
+    return r;
+}
+
+// composes a folder icon from line/fill alpha masks with the given color:
+// fill = the color itself, line = a darkened version (File Explorer style);
+// scales the result to the DPI-dependent image-list size
+wxIcon CUtils::GetFolderIconForPane( const wxArtID &id, const wxSize& size, const wxColour& color )
+{
+    wxIcon r;
+
+    // picks the artwork with the next size for the requested size, like the
+    // toolbar bitmaps: 16px at 100% DPI, 24px at 150%, 32px for higher steps
+    const int need = size != wxDefaultSize ? (size.x > size.y ? size.x : size.y) : 16;
+    const bool opened = (id == wxART_FOLDER_OPEN);
+    const unsigned char *lineData, *fillData;
+    size_t lineSize, fillSize;
+    if( need > 24 ) {
+        lineData = opened ? folder_opened_line_32_png : folder_closed_line_32_png; lineSize = opened ? sizeof(folder_opened_line_32_png) : sizeof(folder_closed_line_32_png);
+        fillData = opened ? folder_opened_fill_32_png : folder_closed_fill_32_png; fillSize = opened ? sizeof(folder_opened_fill_32_png) : sizeof(folder_closed_fill_32_png);
+    } else if( need > 16 ) {
+        lineData = opened ? folder_opened_line_24_png : folder_closed_line_24_png; lineSize = opened ? sizeof(folder_opened_line_24_png) : sizeof(folder_closed_line_24_png);
+        fillData = opened ? folder_opened_fill_24_png : folder_closed_fill_24_png; fillSize = opened ? sizeof(folder_opened_fill_24_png) : sizeof(folder_closed_fill_24_png);
+    } else {
+        lineData = opened ? folder_opened_line_16_png : folder_closed_line_16_png; lineSize = opened ? sizeof(folder_opened_line_16_png) : sizeof(folder_closed_line_16_png);
+        fillData = opened ? folder_opened_fill_16_png : folder_closed_fill_16_png; fillSize = opened ? sizeof(folder_opened_fill_16_png) : sizeof(folder_closed_fill_16_png);
+    }
+    wxMemoryInputStream lineStream( lineData, lineSize ), fillStream( fillData, fillSize );
+    wxImage lineImg( lineStream, wxBITMAP_TYPE_PNG );
+    wxImage fillImg( fillStream, wxBITMAP_TYPE_PNG );
+
+    wxColour lineColor = color.ChangeLightness( 62 );
+    if( lineImg.IsOk() && fillImg.IsOk() &&
+        lineImg.GetWidth() == fillImg.GetWidth() && lineImg.GetHeight() == fillImg.GetHeight() ) {
+        if( !lineImg.HasAlpha() ) lineImg.InitAlpha();
+        if( !fillImg.HasAlpha() ) fillImg.InitAlpha();
+        const int w = lineImg.GetWidth(), h = lineImg.GetHeight();
+        wxImage out( w, h );
+        out.InitAlpha();
+        // InitAlpha() initializes to fully opaque: our compose loop only touches
+        // pixels with content, so start with fully transparent pixels instead
+        memset( out.GetAlpha(), 0, w * h );
+        const unsigned char *ln = lineImg.GetData(), *fa = fillImg.GetData();
+        const unsigned char *la = lineImg.GetAlpha(), *faa = fillImg.GetAlpha();
+        unsigned char *o = out.GetData(), *oa = out.GetAlpha();
+        for( int i = 0; i < w * h; i++ ) {
+            const float aLine = la[i] / 255.0f;
+            const float aFill = faa[i] / 255.0f;
+            const float aOut = aLine + aFill * ( 1.0f - aLine );
+            if( aOut > 0.0f ) {
+                o[3*i]   = (unsigned char) wxRound( ( aLine * lineColor.Red()   + aFill * (1.0f - aLine) * color.Red() )   / aOut );
+                o[3*i+1] = (unsigned char) wxRound( ( aLine * lineColor.Green() + aFill * (1.0f - aLine) * color.Green() ) / aOut );
+                o[3*i+2] = (unsigned char) wxRound( ( aLine * lineColor.Blue()  + aFill * (1.0f - aLine) * color.Blue() )  / aOut );
+                oa[i] = (unsigned char) wxRound( aOut * 255.0f );
+            }
+        }
+        if( size != wxDefaultSize &&
+            ( out.GetWidth() != size.x || out.GetHeight() != size.y ) )
+            out.Rescale( size.x, size.y, wxIMAGE_QUALITY_HIGH );
+        r.CopyFromBitmap( wxBitmap( out ) );
+    }
+
+    if( !r.IsOk() ) {
+        wxIcon icoProv = wxArtProvider::GetIcon( id, wxART_OTHER, size );
+        if( icoProv.IsOk() )
+            r = icoProv;
+    }
+    return r;
+}
+
+wxColour CUtils::FolderIconColorFromConfig()
+{
+    wxColour c( wxT("#FFD35C") );	// Explorer amber, the default
+    wxConfigBase *conf = wxConfigBase::Get();
+    if( conf != NULL ) {
+        conf->SetPath( wxT("/Settings") );
+        wxString s;
+        if( conf->Read( wxT("FolderColor"), &s ) && !s.empty() ) {
+            wxColour fromConfig( s );
+            if( fromConfig.IsOk() )
+                c = fromConfig;
+        }
+    }
+    return c;
 }
 
 void CUtils::SetThousandsSeparators()

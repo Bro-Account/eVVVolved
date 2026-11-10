@@ -47,6 +47,7 @@
 ////@begin includes
 #include "wx/frame.h"
 #include "wx/toolbar.h"
+#include "wx/colour.h"
 #include "wx/statusbr.h"
 #include "wx/splitter.h"
 #include "wx/treectrl.h"
@@ -494,6 +495,11 @@ private:
     // if true show alternate row colors in the list controls
     bool m_AlternateRowColors;
     int m_Appearance;  // 0 = system, 1 = light, 2 = dark
+
+    // color of the folder icons in the trees/lists (settable in the options)
+    wxColour m_FolderIconColor;
+    // re-applies the folder icon color to the image lists of trees and list
+    void UpdateTreeIcons();
 
 	// pointers to some windows used in the main frame
 	CRightPaneList* m_listCtl;	// the list control

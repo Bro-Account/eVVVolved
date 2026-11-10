@@ -121,6 +121,19 @@ public:
     // size is the requested icon size in physical pixels (use FromDIP() to get
     // it); wxDefaultSize asks the art provider for its default size
     static wxIcon GetIconForPane( const char *xpm[], const wxArtID &id, const wxSize& size = wxDefaultSize );
+    // PNG variant: the artwork is embedded as 16/24/32px PNGs; the smallest
+    // source not smaller than the target size is scaled to it (any parameter
+    // may be NULL; falls back to the art provider like the XPM variant)
+    static wxIcon GetIconForPane( const unsigned char *png16, size_t png16Size,
+                                  const unsigned char *png24, size_t png24Size,
+                                  const unsigned char *png32, size_t png32Size,
+                                  const wxArtID &id, const wxSize& size = wxDefaultSize );
+    // folder icons: composed at runtime from line/fill alpha masks so the
+    // user can choose the folder color (fill = color, line = darker color)
+    static wxIcon GetFolderIconForPane( const wxArtID &id, const wxSize& size, const wxColour& color );
+    // the folder icon color as stored in the configuration (reads
+    // HKCU\Software\VVV\VVV/Settings/FolderColor; default = Explorer amber)
+    static wxColour FolderIconColorFromConfig();
 
     // add thousands separators to the input string that must reperesente an integer number
     static wxString AddThousandsSeparators( const wxString &s );

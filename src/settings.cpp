@@ -43,6 +43,7 @@
 #include "settings.h"
 #include "vvv.h"
 #include "ibpp.h"
+#include "utils.h"
 #include "chooselang.h"
 
 ////@begin XPM images
@@ -69,6 +70,7 @@ BEGIN_EVENT_TABLE( CDialogSettings, wxPropertySheetDialog )
     EVT_UPDATE_UI( ID_DS_PASSWORD, CDialogSettings::OnDsPasswordUpdate )
     EVT_BUTTON( ID_DS_TEST_CONNECTION, CDialogSettings::OnDsTestConnectionClick )
     EVT_UPDATE_UI( ID_DS_TEST_CONNECTION, CDialogSettings::OnDsTestConnectionUpdate )
+    EVT_COLOURPICKER_CHANGED( ID_DS_FOLDERCOLOR, CDialogSettings::OnDsFolderColorChanged )
 ////@end CDialogSettings event table entries
 
     EVT_BUTTON( wxID_HELP, CDialogSettings::OnHelpClick )
@@ -136,6 +138,7 @@ CDialogSettings::~CDialogSettings()
 void CDialogSettings::Init()
 {
     m_Appearance = 0;
+    m_FolderColor = wxColour( wxT("#FFD35C") );	// Explorer amber, the default
 ////@begin CDialogSettings member initialisation
     m_BeepTimeCtrl = NULL;
     m_chkCatalogAudioMetadata = NULL;
@@ -188,6 +191,16 @@ void CDialogSettings::CreateControls()
 
     m_BeepTimeCtrl = new wxSpinCtrl( itemPanel2, ID_SPIN_BEEP_TIME, wxT("0"), wxDefaultPosition, wxSize(FromDIP(60), -1), wxSP_ARROW_KEYS, 0, 10000, 0 );
     itemBoxSizer7->Add(m_BeepTimeCtrl, 0, wxALIGN_CENTER_VERTICAL|wxALL, FromDIP(5));
+
+    // folder icon color: swatch picker with a live folder-icon preview in the chosen color
+    wxBoxSizer* itemBoxSizerColour = new wxBoxSizer(wxHORIZONTAL);
+    itemBoxSizer4->Add(itemBoxSizerColour, 0, wxALIGN_LEFT|wxALL, FromDIP(5));
+    itemBoxSizerColour->Add(new wxStaticText( itemPanel2, wxID_STATIC, _("Folder icon color:"), wxDefaultPosition, wxDefaultSize, 0 ), 0, wxALIGN_CENTER_VERTICAL|wxRIGHT|wxTOP|wxBOTTOM, FromDIP(5));
+    m_FolderColorCtrl = new wxColourPickerCtrl( itemPanel2, ID_DS_FOLDERCOLOR, m_FolderColor, wxDefaultPosition, wxDefaultSize, 0 );
+    itemBoxSizerColour->Add(m_FolderColorCtrl, 0, wxALIGN_CENTER_VERTICAL|wxALL, FromDIP(5));
+    m_FolderColorPreview = new wxStaticBitmap( itemPanel2, wxID_ANY, wxNullBitmap, wxDefaultPosition, wxDefaultSize );
+    itemBoxSizerColour->Add(m_FolderColorPreview, 0, wxALIGN_CENTER_VERTICAL|wxLEFT, FromDIP(10));
+    UpdateFolderColorPreview();
 
     itemBoxSizer4->Add(FromDIP(5), FromDIP(5), 1, wxALIGN_CENTER_HORIZONTAL|wxALL, FromDIP(5));
 
@@ -383,6 +396,11 @@ bool CDialogSettings::TransferDataToWindow() {
 	m_chkSampleRate->SetValue( m_amdColumnsToShow[CMainFrame::amdSampleRate] );
 	m_chkChannels->SetValue( m_amdColumnsToShow[CMainFrame::amdChannels] );
 
+	// the picker is created before SetFolderColor() is called, so sync it here
+	if( m_FolderColorCtrl != NULL )
+		m_FolderColorCtrl->SetColour( m_FolderColor );
+	UpdateFolderColorPreview();
+
 	return wxPropertySheetDialog::TransferDataToWindow();
 }
 
@@ -471,8 +489,27 @@ void CDialogSettings::OnDsPasswordUpdate( wxUpdateUIEvent& event )
  * wxEVT_COMMAND_BUTTON_CLICKED event handler for ID_DS_TEST_CONNECTION
  */
 
-void CDialogSettings::OnDsTestConnectionClick( wxCommandEvent& WXUNUSED(event) )
+// stores the picked color and refreshes the preview; applied by the caller
+// when the dialog is closed with OK (see OnPreferencesClick)
+void CDialogSettings::OnDsFolderColorChanged( wxColourPickerEvent& event )
 {
+	m_FolderColor = event.GetColour();
+	UpdateFolderColorPreview();
+	event.Skip();
+}
+
+// renders a small folder icon in the current color as the picker's preview
+void CDialogSettings::UpdateFolderColorPreview()
+{
+	if( m_FolderColorPreview == NULL ) return;
+	wxIcon ico = CUtils::GetFolderIconForPane( wxART_FOLDER, FromDIP( wxSize( 24, 24 ) ), m_FolderColor );
+	if( !ico.IsOk() ) return;
+	wxBitmap bmp;
+	bmp.CopyFromIcon( ico );
+	m_FolderColorPreview->SetBitmap( bmp );
+}
+
+void CDialogSettings::OnDsTestConnectionClick( wxCommandEvent& WXUNUSED(event) ){
 	wxString sn;
 	wxBusyCursor bc;
 

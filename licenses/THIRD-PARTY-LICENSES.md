@@ -14,6 +14,7 @@ folder or installer) carries these texts in its `licenses/` subfolder.
 | zlib (`zlib1.dll`, shipped by Firebird 5) | 1.3.x | zlib license | `zlib-LICENSE.txt` |
 | wxWidgets (`wx*32u_*.dll`, 13 DLLs) | 3.2.8 | wxWindows Library Licence (LGPL 2.1 + binary-use exception) | `wxWidgets-licence.txt` |
 | TagLib (statically linked into `vvv.exe`) | 2.3.1 | LGPL 2.1 / MPL 1.1 (dual) | `TagLib-COPYING.LGPL.txt`, `TagLib-COPYING.MPL.txt` |
+| Fluent UI System Icons (toolbar/tree artwork, embedded as PNG data) | 2025 | MIT | `Fluent-UI-System-Icons-MIT.txt` |
 | IBPP (statically linked into `vvv.exe`) | 2006 copy | IBPP License | `IBPP-license.txt` |
 | Visual C++ 2015–2022 runtime (`msvcp140*.dll`, `vcruntime140*.dll`), VC80 CRT inside the FB 2.5 helper | — | Microsoft redistributable terms | `MICROSOFT-CRT-NOTE.txt` |
 

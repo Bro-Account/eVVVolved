@@ -1,5 +1,5 @@
 ; -- vvv.iss --
-; install script for VVV 2.0 (evvvolved)
+; install script for VVV 2.0 (eVVVolved)
 
 ; packages the staged runtime folder produced by build.ps1 (..\run-x64),
 ; which contains the program, wxWidgets DLLs, the Firebird 5 runtime and

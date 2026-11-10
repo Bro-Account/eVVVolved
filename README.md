@@ -1,4 +1,4 @@
-# VVV (Virtual Volumes View) 2.0 — evvvolved
+# VVV (Virtual Volumes View) 2.0 — eVVVolved
 
 VVV catalogs the content of removable volumes (external drives, CDs, DVDs) so you can
 browse and search them offline. Folders and files can also be arranged in a virtual
@@ -23,6 +23,12 @@ created by pre-2.0 versions must be converted once (see below).
   needed conversion to `stderr` and no longer hangs.
 - Scanning a folder reads it in one pass instead of one query per file, and
   long paths (>260 characters) are supported.
+- Fresh icon set: the toolbar and tree/list icons are Microsoft
+  [Fluent UI System Icons](https://github.com/microsoft/fluentui-system-icons)
+  in consistent outline style (blue-accent catalog disc).
+- Folder icon color is configurable: trees and file lists show folders in a
+  two-tone File-Explorer-like style, colored via Tools → Options → General
+  and stored in the settings.
 - Catalog structure version stayed at 24, so catalogs created with the
   modernized app still have the same schema — only the on-disk format (ODS)
   changed with the engine.
@@ -48,7 +54,7 @@ open it. They must be converted once.
 - **Standalone converter (fallback):** the self-contained `catalog-converter`
   folder remains useful for mass conversions (wildcards, drag several files
   onto `convert-old-catalog.cmd`) and is available from the
-  [Releases page](https://github.com/Bro-Account/evvvolved/releases). It
+  [Releases page](https://github.com/Bro-Account/eVVVolved/releases). It
   bundles every engine it needs and can convert many catalogs in one run —
   one failing catalog does not stop the others.
 - **macOS:** the app converts it in place: open the old catalog, answer Yes and

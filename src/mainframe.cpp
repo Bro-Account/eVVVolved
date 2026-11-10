@@ -1,4 +1,4 @@
-/*
+﻿/*
 	This file is part of VVV (Virtual Volumes View)
 
 	Copyright (C) 2007, the VVV Development team
@@ -88,16 +88,9 @@
 
 ////@begin XPM images
 #include "graphics/vvv32.xpm"
-#include "graphics/tlb_toolbar_png.inc"
-#include "graphics/tlb_catalog.inc"
-#include "graphics/tlb_physical.xpm"
-#include "graphics/tlb_virtual.xpm"
+#include "graphics2/tlb_toolbar_png.inc"
+#include "graphics2/tree_png.inc"
 ////@end XPM images
-
-#include "graphics/folder_closed.xpm"
-#include "graphics/folder_opened.xpm"
-#include "graphics/removable.xpm"
-#include "graphics/deffile.xpm"
 
 // column used to sort the listview: it is the number that the column would have if no columns were hidden
 // columns that are not visible are always counted to make things simpler
@@ -845,6 +838,8 @@ bool CMainFrame::Create( wxWindow* parent, wxWindowID id, const wxString& captio
 	pConfig->Read( wxT("Appearance"), &m_Appearance, 0 );
 	ApplyAppearance( m_Appearance );
 	CreateAppearanceButton();
+	// the folder icon color is applied when the trees/lists (re)build
+	m_FolderIconColor = CUtils::FolderIconColorFromConfig();
 	pConfig->SetPath(wxT("/Settings/DatabaseServer"));
 	pConfig->Read( wxT("ConnectToServer"), &DBConnectionData.connectToServer, false );
 	DBConnectionData.serverName = pConfig->Read( wxT("ServerName"), wxEmptyString );
@@ -1162,43 +1157,30 @@ bool CMainFrame::ShowToolTips()
 
 wxBitmap CMainFrame::GetBitmapResource( const wxString& name )
 {
-    // Bitmap retrieval
+// Bitmap retrieval
     wxUnusedVar(name);
-    wxBitmap bitmap;
     if (name == wxT("graphics/tlb_new.xpm"))
-    {
         return GetToolbarBitmap( tlb_new_16_png, sizeof(tlb_new_16_png),
                                  tlb_new_24_png, sizeof(tlb_new_24_png), this );
-    }
-    else if (name == wxT("graphics/tlb_open.xpm"))
-    {
+    if (name == wxT("graphics/tlb_open.xpm"))
         return GetToolbarBitmap( tlb_open_16_png, sizeof(tlb_open_16_png),
                                  tlb_open_24_png, sizeof(tlb_open_24_png), this );
-    }
-    else if (name == wxT("graphics/tlb_catalog.png"))
-    {
-        wxMemoryInputStream memStream(tlb_catalog_png, sizeof(tlb_catalog_png));
-        bitmap = wxBitmap(wxImage(memStream, wxBITMAP_TYPE_ANY, -1), -1);
-    }
-    else if (name == wxT("graphics/tlb_up.xpm"))
-    {
+    if (name == wxT("graphics/tlb_catalog.png"))
+        return GetToolbarBitmap( tlb_catalog_16_png, sizeof(tlb_catalog_16_png),
+                                 tlb_catalog_24_png, sizeof(tlb_catalog_24_png), this );
+    if (name == wxT("graphics/tlb_up.xpm"))
         return GetToolbarBitmap( tlb_up_16_png, sizeof(tlb_up_16_png),
                                  tlb_up_24_png, sizeof(tlb_up_24_png), this );
-    }
-    else if (name == wxT("graphics/tlb_physical.xpm"))
-    {
-        bitmap = wxBitmap(tlb_physical_xpm);
-    }
-    else if (name == wxT("graphics/tlb_virtual.xpm"))
-    {
-        bitmap = wxBitmap(tlb_virtual_xpm);
-    }
-    else if (name == wxT("graphics/tlb_search.xpm"))
-    {
+    if (name == wxT("graphics/tlb_physical.xpm"))
+        return GetToolbarBitmap( tlb_physical_16_png, sizeof(tlb_physical_16_png),
+                                 tlb_physical_24_png, sizeof(tlb_physical_24_png), this );
+    if (name == wxT("graphics/tlb_virtual.xpm"))
+        return GetToolbarBitmap( tlb_virtual_16_png, sizeof(tlb_virtual_16_png),
+                                 tlb_virtual_24_png, sizeof(tlb_virtual_24_png), this );
+    if (name == wxT("graphics/tlb_search.xpm"))
         return GetToolbarBitmap( tlb_search_16_png, sizeof(tlb_search_16_png),
                                  tlb_search_24_png, sizeof(tlb_search_24_png), this );
-    }
-    return ScaleToolbarBitmap( this, bitmap );
+    return wxNullBitmap;
 }
 
 /*!
@@ -1233,17 +1215,43 @@ void CMainFrame::OnCatalogVolumeClick( wxCommandEvent& WXUNUSED(event) )
 }
 
 
-void CMainFrame::LoadTreeControl(void) {
+// re-applies the folder icon color: rebuilds the image lists of both trees
+// and of the right pane list control (they are keyed by stable icon indices,
+// so replacing them does not touch the existing items)
+void CMainFrame::UpdateTreeIcons()
+{
+	const wxSize iconSize = FromDIP( wxSize( 16, 16 ) );
 
+	for( int t = 0; t < 2; t++ ) {
+		wxTreeCtrl* tctl = ( t == 0 ) ? GetTreePhysicalControl() : GetTreeVirtualControl();
+		if( tctl == NULL ) continue;
+		wxImageList* iml = new wxImageList( iconSize.x, iconSize.y );
+		iml->Add( CUtils::GetIconForPane(removable_16_png, sizeof(removable_16_png), removable_24_png, sizeof(removable_24_png), removable_32_png, sizeof(removable_32_png), wxART_REMOVABLE, iconSize) );
+		iml->Add( CUtils::GetFolderIconForPane(wxART_FOLDER, iconSize, m_FolderIconColor) );
+		iml->Add( CUtils::GetFolderIconForPane(wxART_FOLDER_OPEN, iconSize, m_FolderIconColor) );
+		tctl->AssignImageList( iml );
+	}
+
+	CRightPaneList* lctl = GetListControl();
+	if( lctl != NULL ) {
+		wxImageList* iml = new wxImageList( iconSize.x, iconSize.y );
+		iml->Add( CUtils::GetFolderIconForPane(wxART_FOLDER, iconSize, m_FolderIconColor) );
+		iml->Add( CUtils::GetIconForPane(deffile_16_png, sizeof(deffile_16_png), deffile_24_png, sizeof(deffile_24_png), deffile_32_png, sizeof(deffile_32_png), wxART_NORMAL_FILE, iconSize) );
+		lctl->AssignImageList( iml, wxIMAGE_LIST_SMALL );
+	}
+}
+
+
+void CMainFrame::LoadTreeControl(void) {
 	DeleteAllListControlItems();
 	wxYield();
 
 	wxTreeCtrl* tctl = GetTreePhysicalControl();
 	const wxSize iconSize = FromDIP(wxSize(16, 16));
 	wxImageList* iml = new wxImageList( iconSize.x, iconSize.y );
-    iml->Add( CUtils::GetIconForPane(removable_xpm, wxART_REMOVABLE, iconSize) );
-    iml->Add( CUtils::GetIconForPane(folder_closed_xpm, wxART_FOLDER, iconSize) );
-    iml->Add( CUtils::GetIconForPane(folder_opened_xpm, wxART_FOLDER_OPEN, iconSize) );
+    iml->Add( CUtils::GetIconForPane(removable_16_png, sizeof(removable_16_png), removable_24_png, sizeof(removable_24_png), removable_32_png, sizeof(removable_32_png), wxART_REMOVABLE, iconSize) );
+    iml->Add( CUtils::GetFolderIconForPane(wxART_FOLDER, iconSize, m_FolderIconColor) );
+    iml->Add( CUtils::GetFolderIconForPane(wxART_FOLDER_OPEN, iconSize, m_FolderIconColor) );
 	tctl->AssignImageList( iml );
 
 	m_IgnoreTreeCtrlEvents = true;
@@ -1330,9 +1338,9 @@ void CMainFrame::LoadVirtualTreeControl(void) {
 	wxTreeCtrl* tctl = GetTreeVirtualControl();
 	const wxSize iconSize = FromDIP(wxSize(16, 16));
 	wxImageList* iml = new wxImageList( iconSize.x, iconSize.y );
-    iml->Add( CUtils::GetIconForPane(removable_xpm, wxART_REMOVABLE, iconSize) );
-    iml->Add( CUtils::GetIconForPane(folder_closed_xpm, wxART_FOLDER, iconSize) );
-    iml->Add( CUtils::GetIconForPane(folder_opened_xpm, wxART_FOLDER_OPEN, iconSize) );
+    iml->Add( CUtils::GetIconForPane(removable_16_png, sizeof(removable_16_png), removable_24_png, sizeof(removable_24_png), removable_32_png, sizeof(removable_32_png), wxART_REMOVABLE, iconSize) );
+    iml->Add( CUtils::GetFolderIconForPane(wxART_FOLDER, iconSize, m_FolderIconColor) );
+    iml->Add( CUtils::GetFolderIconForPane(wxART_FOLDER_OPEN, iconSize, m_FolderIconColor) );
 	tctl->AssignImageList( iml );
 
 	tctl->DeleteAllItems();
@@ -1495,8 +1503,8 @@ void CMainFrame::CreateListControlHeaders(void) {
 	// assigns the image list
 	const wxSize iconSize = FromDIP(wxSize(16, 16));
 	wxImageList* iml = new wxImageList( iconSize.x, iconSize.y );
-	iml->Add( CUtils::GetIconForPane(folder_closed_xpm, wxART_FOLDER, iconSize) );
-	iml->Add( CUtils::GetIconForPane(deffile_xpm, wxART_NORMAL_FILE, iconSize) );
+	iml->Add( CUtils::GetFolderIconForPane(wxART_FOLDER, iconSize, m_FolderIconColor) );
+	iml->Add( CUtils::GetIconForPane(deffile_16_png, sizeof(deffile_16_png), deffile_24_png, sizeof(deffile_24_png), deffile_32_png, sizeof(deffile_32_png), wxART_NORMAL_FILE, iconSize) );
 	lctl->AssignImageList( iml, wxIMAGE_LIST_SMALL );
 
 	// adds a dummy row and deletes it
@@ -1750,6 +1758,9 @@ CMainFrame::~CMainFrame() {
 	pConfig->Write( wxT("ForceEnglish"), m_forceEnglishLanguage );
 	pConfig->Write( wxT("LongTaskBeepTime"), m_BeepTime );
 	pConfig->Write( wxT("Appearance"), m_Appearance );
+	// only writes a valid color: an invalid wxColour would persist as "#000000"
+	if( m_FolderIconColor.IsOk() )
+		pConfig->Write( wxT("FolderColor"), m_FolderIconColor.GetAsString( wxC2S_HTML_SYNTAX ) );
 	pConfig->Write( wxT("CatalogAudioMetadata"), m_CatalogAudioMetadata );
 	pConfig->SetPath(wxT("/Settings/DatabaseServer"));
 	pConfig->Write( wxT("ConnectToServer"), DBConnectionData.connectToServer );
@@ -1929,8 +1940,8 @@ void CMainFrame::ShowFolderFiles( wxTreeItemId itemID ) {
 	// assigns the image list
 	const wxSize iconSize = FromDIP(wxSize(16, 16));
 	wxImageList* iml = new wxImageList( iconSize.x, iconSize.y );
-    iml->Add( CUtils::GetIconForPane(folder_closed_xpm, wxART_FOLDER, iconSize) );
-    iml->Add( CUtils::GetIconForPane(deffile_xpm, wxART_NORMAL_FILE, iconSize) );
+    iml->Add( CUtils::GetFolderIconForPane(wxART_FOLDER, iconSize, m_FolderIconColor) );
+    iml->Add( CUtils::GetIconForPane(deffile_16_png, sizeof(deffile_16_png), deffile_24_png, sizeof(deffile_24_png), deffile_32_png, sizeof(deffile_32_png), wxART_NORMAL_FILE, iconSize) );
 	lctl->AssignImageList( iml, wxIMAGE_LIST_SMALL );
 
     MyTreeItemData *itemData = (MyTreeItemData *) tctl->GetItemData(itemID);
@@ -2030,8 +2041,8 @@ void CMainFrame::ShowVirtualFolderFiles( wxTreeItemId itemID ) {
 	// assigns the image list
 	const wxSize iconSize = FromDIP(wxSize(16, 16));
 	wxImageList* iml = new wxImageList( iconSize.x, iconSize.y );
-    iml->Add( CUtils::GetIconForPane(folder_closed_xpm, wxART_FOLDER, iconSize) );
-    iml->Add( CUtils::GetIconForPane(deffile_xpm, wxART_NORMAL_FILE, iconSize) );
+    iml->Add( CUtils::GetFolderIconForPane(wxART_FOLDER, iconSize, m_FolderIconColor) );
+    iml->Add( CUtils::GetIconForPane(deffile_16_png, sizeof(deffile_16_png), deffile_24_png, sizeof(deffile_24_png), deffile_32_png, sizeof(deffile_32_png), wxART_NORMAL_FILE, iconSize) );
 	lctl->AssignImageList( iml, wxIMAGE_LIST_SMALL );
 
 	// retrieves info about the selected item
@@ -2363,7 +2374,7 @@ void CMainFrame::OpenDatabase( wxString fileName, int expectedVersion ) {
 					errorOpeningDB = true;
 					break;
 				}
-				CUtils::MsgErr( _("This catalog has been created with VVV 1.5 or older and must be converted before this version can open it:\n\n") + fileName + _("\n\nHow to convert it: https://github.com/Bro-Account/evvvolved\nThe original file is not modified.") );
+				CUtils::MsgErr( _("This catalog has been created with VVV 1.5 or older and must be converted before this version can open it:\n\n") + fileName + _("\n\nHow to convert it: https://github.com/Bro-Account/eVVVolved\nThe original file is not modified.") );
 				errorOpeningDB = true;
 				break;
 			case CDataErrorException::ecServerNotFound:
@@ -3154,8 +3165,8 @@ void CMainFrame::OnButtonSearchClick( wxCommandEvent& WXUNUSED(event) ) {
 	// assigns the image list
 	const wxSize iconSize = FromDIP(wxSize(16, 16));
 	wxImageList* iml = new wxImageList( iconSize.x, iconSize.y );
-	iml->Add( CUtils::GetIconForPane(folder_closed_xpm, wxART_FOLDER, iconSize) );
-	iml->Add( CUtils::GetIconForPane(deffile_xpm, wxART_NORMAL_FILE, iconSize) );
+	iml->Add( CUtils::GetFolderIconForPane(wxART_FOLDER, iconSize, m_FolderIconColor) );
+	iml->Add( CUtils::GetIconForPane(deffile_16_png, sizeof(deffile_16_png), deffile_24_png, sizeof(deffile_24_png), deffile_32_png, sizeof(deffile_32_png), wxART_NORMAL_FILE, iconSize) );
 	lctl->AssignImageList( iml, wxIMAGE_LIST_SMALL );
 
 	nSearchFiles = 0;
@@ -3579,6 +3590,7 @@ void CMainFrame::OnPreferencesClick( wxCommandEvent& WXUNUSED(event) )
 	dlg.SetCatalogAudioMetadata( m_CatalogAudioMetadata );
     dlg.SetAlternateRowColors( m_AlternateRowColors );
 	dlg.SetAppearance( m_Appearance );
+	dlg.SetFolderColor( m_FolderIconColor );
 	if( dlg.ShowModal() ) {
 		m_reopenLastUsedCatalog = dlg.GetReopenCatalog();
 		m_amdColumnsToShow = dlg.GetAmdColumnsToShow();
@@ -3591,6 +3603,8 @@ void CMainFrame::OnPreferencesClick( wxCommandEvent& WXUNUSED(event) )
 		m_CatalogAudioMetadata = dlg.GetCatalogAudioMetadata();
         m_AlternateRowColors = dlg.GetAlternateRowColors();
 		m_Appearance = dlg.GetAppearance();
+		m_FolderIconColor = dlg.GetFolderColor();
+		UpdateTreeIcons();
 		ApplyAppearance( m_Appearance );
 		UpdateAppearanceButton();
 		RefreshCurrentView();	// if the user changes the columns to show
