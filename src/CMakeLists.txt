@@ -217,12 +217,38 @@ if( UNIX AND NOT APPLE )
     install( DIRECTORY ${VVV_FIREBIRD_ROOT}/ DESTINATION firebird USE_SOURCE_PERMISSIONS )
   endif()
   # copy other files used only for the Linux version
-  install( FILES ${PROJECT_SOURCE_DIR}/linux_specific/readme.txt 
-                 ${PROJECT_SOURCE_DIR}/linux_specific/License.txt 
+  install( FILES ${PROJECT_SOURCE_DIR}/linux_specific/readme.txt
+                 ${PROJECT_SOURCE_DIR}/linux_specific/License.txt
                  DESTINATION . )
-  install( FILES ${PROJECT_SOURCE_DIR}/linux_specific/vvv-start.sh 
+  install( FILES ${PROJECT_SOURCE_DIR}/linux_specific/vvv-start.sh
                  DESTINATION . PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE
                                            GROUP_READ WORLD_READ WORLD_EXECUTE )
+
+  # License texts of the program itself (COPYING) and of every third-party
+  # component shipped next to the app; same layout as the Windows install.
+  file( GLOB VVV_LICENSE_FILES "${PROJECT_SOURCE_DIR}/licenses/*" )
+  install( FILES ${VVV_LICENSE_FILES} DESTINATION licenses )
+  install( FILES "${PROJECT_SOURCE_DIR}/COPYING" DESTINATION licenses )
+
+  # Old-catalog conversion helper: a Firebird 2.5 (gbak + isql) runtime in a
+  # subfolder of the program, used for VVV 1.5 (ODS 11) conversions. The app
+  # accepts both layouts: firebird-2.5/<tool> and the bin/ of a Firebird
+  # tarball (firebird-2.5/bin/<tool>). Staged from deps/ when present; without
+  # it the app shows the "conversion helper is missing" message instead.
+  # The arm64 engine is a separate deps/firebird-2.5-arm64 folder (Windows
+  # ships its own x64 helper from deps/firebird-2.5, see the WIN32 block).
+  set( VVV_FB25_ROOT "${PROJECT_SOURCE_DIR}/../deps/firebird-2.5-arm64" CACHE PATH "Firebird 2.5 arm64 conversion helper folder" )
+  if( EXISTS "${VVV_FB25_ROOT}" )
+    file( GLOB VVV_FB25_FILES "${VVV_FB25_ROOT}/*.conf"
+                              "${VVV_FB25_ROOT}/*.msg"
+                              "${VVV_FB25_ROOT}/*.txt" )
+    install( FILES ${VVV_FB25_FILES} DESTINATION firebird-2.5 )
+    foreach( _dir bin intl )
+      if( EXISTS "${VVV_FB25_ROOT}/${_dir}" )
+        install( DIRECTORY "${VVV_FB25_ROOT}/${_dir}" DESTINATION firebird-2.5 USE_SOURCE_PERMISSIONS )
+      endif()
+    endforeach()
+  endif()
 endif( UNIX AND NOT APPLE )
 
 if( UNIX )
