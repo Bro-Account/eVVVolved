@@ -1,0 +1,41 @@
+# Continuous build for Windows x64.
+#
+# Produces a runnable run-x64 artifact on every push to develop so that
+# changes can be tested without a local build environment. The dependency
+# provisioning lives in scripts/fetch-windows-deps.ps1 (kept outside of the
+# workflow on purpose: it is the same script used for local setup).
+name: windows-build
+
+on:
+  push:
+    branches: [develop, main]
+  pull_request:
+    branches: [develop, main]
+  workflow_dispatch:
+
+concurrency:
+  group: windows-build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  windows:
+    runs-on: windows-2022
+    timeout-minutes: 45
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Provision dependencies
+        run: powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\fetch-windows-deps.ps1
+
+      - name: Build and stage run-x64
+        run: |
+          $env:MSBUILDDISABLENODEREUSE = 1
+          powershell -NoProfile -ExecutionPolicy Bypass -File .\build.ps1
+
+      - name: Upload run-x64
+        uses: actions/upload-artifact@v4
+        with:
+          name: vvv-windows-x64
+          path: run-x64/
+          if-no-files-found: error
