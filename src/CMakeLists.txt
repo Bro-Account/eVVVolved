@@ -235,15 +235,17 @@ if( UNIX AND NOT APPLE )
   # accepts both layouts: firebird-2.5/<tool> and the bin/ of a Firebird
   # tarball (firebird-2.5/bin/<tool>). Staged from deps/ when present; without
   # it the app shows the "conversion helper is missing" message instead.
-  # The arm64 engine is a separate deps/firebird-2.5-arm64 folder (Windows
-  # ships its own x64 helper from deps/firebird-2.5, see the WIN32 block).
-  set( VVV_FB25_ROOT "${PROJECT_SOURCE_DIR}/../deps/firebird-2.5-arm64" CACHE PATH "Firebird 2.5 arm64 conversion helper folder" )
+  # The arm64 engine is a separate deps/firebird-2.5-arm64 folder, assembled
+  # by scripts/fetch-firebird25-arm64.sh (Windows ships its own x64 helper
+  # from deps/firebird-2.5, see the WIN32 block).
+  set( VVV_FB25_ROOT "${PROJECT_SOURCE_DIR}/deps/firebird-2.5-arm64" CACHE PATH "Firebird 2.5 arm64 conversion helper folder" )
   if( EXISTS "${VVV_FB25_ROOT}" )
     file( GLOB VVV_FB25_FILES "${VVV_FB25_ROOT}/*.conf"
                               "${VVV_FB25_ROOT}/*.msg"
-                              "${VVV_FB25_ROOT}/*.txt" )
+                              "${VVV_FB25_ROOT}/*.txt"
+                              "${VVV_FB25_ROOT}/*.fdb" )
     install( FILES ${VVV_FB25_FILES} DESTINATION firebird-2.5 )
-    foreach( _dir bin intl )
+    foreach( _dir bin intl lib )
       if( EXISTS "${VVV_FB25_ROOT}/${_dir}" )
         install( DIRECTORY "${VVV_FB25_ROOT}/${_dir}" DESTINATION firebird-2.5 USE_SOURCE_PERMISSIONS )
       endif()
