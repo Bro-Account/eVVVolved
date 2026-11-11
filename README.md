@@ -1,5 +1,7 @@
 # VVV (Virtual Volumes View) 2.0 — eVVVolved
 
+![VVV 2.0 browsing a catalog](docs/screenshot.png)
+
 VVV catalogs the content of removable volumes (external drives, CDs, DVDs) so you can
 browse and search them offline. Folders and files can also be arranged in a virtual
 file system that holds files from many volumes.
