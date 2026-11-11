@@ -111,6 +111,7 @@ function Invoke-Build([string]$a) {
         -DTAGLIB_INCLUDE_PATH="$(Join-Path $taglibRoot 'include\taglib')" `
         -DTAGLIB_LIB_PATH_DEBUG="$taglibLib" `
         -DTAGLIB_LIB_PATH_RELEASE="$taglibLib" `
+        -DVVV_FIREBIRD_ROOT="$fbRoot" `
         -DCMAKE_CXX_STANDARD=17
     if ($LASTEXITCODE -ne 0) { throw "CMake configure failed for $a" }
 

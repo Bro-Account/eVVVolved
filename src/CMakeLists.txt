@@ -345,6 +345,9 @@ if( WIN32 )
   # Windows has no install rules yet: the run folder is otherwise assembled by build.ps1.
   # Ship the Firebird 5 embedded runtime, wxWidgets release DLLs and the data files
   # next to vvv.exe (CUtils::GetDataFilesPath() returns the exe folder).
+  # Overridable so build.ps1 can point at the deps\ folder it provisioned
+  # (which on CI lives inside the checkout, not one level above it).
+  set( VVV_FIREBIRD_ROOT "${PROJECT_SOURCE_DIR}/../deps/firebird-5.0.4-x64" CACHE PATH "Firebird 5.0.4 runtime folder" )
   if( NOT VVV_FIREBIRD_ROOT )
     if( CMAKE_SIZEOF_VOID_P EQUAL 8 )
       set( _vvv_fb_arch x64 )
