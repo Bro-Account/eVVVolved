@@ -1,5 +1,7 @@
 # VVV (Virtual Volumes View) 2.0 — eVVVolved
 
+[![Windows build](https://github.com/Bro-Account/eVVVolved/actions/workflows/windows.yml/badge.svg)](https://github.com/Bro-Account/eVVVolved/actions/workflows/windows.yml)
+
 ![VVV 2.0 browsing a catalog](docs/screenshot.png)
 
 VVV catalogs the content of removable volumes (external drives, CDs, DVDs) so you can
@@ -70,7 +72,17 @@ open it. They must be converted once.
 Requirements: Visual Studio 2022/2026 Build Tools with the C++ CMake tools
 component (Visual Studio 18 2026 generator tested), Windows PowerShell 5.1.
 
-Populate a `deps/` folder next to (or one level above) this checkout:
+Populate a `deps/` folder next to (or one level above) this checkout. The
+script `scripts/fetch-windows-deps.ps1` does that for you from the official
+downloads (wxWidgets 3.2.8 prebuilt MSVC x64 binaries, the Firebird 5.0.4
+zip kit and a static TagLib 2.3.1 build; needs 7-Zip, CMake and the
+Build Tools):
+
+```powershell
+.\scripts\fetch-windows-deps.ps1
+```
+
+or assemble the folders manually:
 
 ```text
 deps\wxWidgets-3.2.8-x64     official wxWidgets 3.2.8 MSVC prebuilt DLLs (+ headers)

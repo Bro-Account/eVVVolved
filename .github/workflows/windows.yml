@@ -23,7 +23,7 @@ jobs:
     timeout-minutes: 45
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Provision dependencies
         run: powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\fetch-windows-deps.ps1
@@ -34,7 +34,7 @@ jobs:
           powershell -NoProfile -ExecutionPolicy Bypass -File .\build.ps1
 
       - name: Upload run-x64
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: vvv-windows-x64
           path: run-x64/
