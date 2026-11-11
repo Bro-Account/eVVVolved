@@ -47,7 +47,7 @@ else(WIN32)
 endif(WIN32)
 
 include_directories( ${TAGLIB_INCLUDE_PATH} )
-if( TAGLIB_LIB MATCHES "\\.a$" )   # only a static link needs the TAGLIB_STATIC macro
+if( TAGLIB_LIB MATCHES "\\.(a|lib)$" )   # only a static link needs the TAGLIB_STATIC macro
   add_definitions( -DTAGLIB_STATIC )
 endif()
 
