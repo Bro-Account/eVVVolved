@@ -71,6 +71,7 @@ BEGIN_EVENT_TABLE( CDialogSettings, wxPropertySheetDialog )
     EVT_BUTTON( ID_DS_TEST_CONNECTION, CDialogSettings::OnDsTestConnectionClick )
     EVT_UPDATE_UI( ID_DS_TEST_CONNECTION, CDialogSettings::OnDsTestConnectionUpdate )
     EVT_COLOURPICKER_CHANGED( ID_DS_FOLDERCOLOR, CDialogSettings::OnDsFolderColorChanged )
+    EVT_BUTTON( ID_DS_FOLDERDEFAULT, CDialogSettings::OnDsFolderDefaultClick )
 ////@end CDialogSettings event table entries
 
     EVT_BUTTON( wxID_HELP, CDialogSettings::OnHelpClick )
@@ -138,7 +139,7 @@ CDialogSettings::~CDialogSettings()
 void CDialogSettings::Init()
 {
     m_Appearance = 0;
-    m_FolderColor = wxColour( wxT("#FFD35C") );	// Explorer amber, the default
+    m_FolderColor = wxColour( FOLDER_COLOR_DEFAULT );	// Explorer amber
 ////@begin CDialogSettings member initialisation
     m_BeepTimeCtrl = NULL;
     m_chkCatalogAudioMetadata = NULL;
@@ -198,6 +199,9 @@ void CDialogSettings::CreateControls()
     itemBoxSizerColour->Add(new wxStaticText( itemPanel2, wxID_STATIC, _("Folder icon color:"), wxDefaultPosition, wxDefaultSize, 0 ), 0, wxALIGN_CENTER_VERTICAL|wxRIGHT|wxTOP|wxBOTTOM, FromDIP(5));
     m_FolderColorCtrl = new wxColourPickerCtrl( itemPanel2, ID_DS_FOLDERCOLOR, m_FolderColor, wxDefaultPosition, wxDefaultSize, 0 );
     itemBoxSizerColour->Add(m_FolderColorCtrl, 0, wxALIGN_CENTER_VERTICAL|wxALL, FromDIP(5));
+    wxButton* folderDefaultButton = new wxButton( itemPanel2, ID_DS_FOLDERDEFAULT, _("Default"), wxDefaultPosition, wxDefaultSize, 0 );
+    folderDefaultButton->SetToolTip( _("Restores the default folder color (amber, like the Windows 11 File Explorer folders)") );
+    itemBoxSizerColour->Add(folderDefaultButton, 0, wxALIGN_CENTER_VERTICAL|wxALL, FromDIP(5));
     m_FolderColorPreview = new wxStaticBitmap( itemPanel2, wxID_ANY, wxNullBitmap, wxDefaultPosition, wxDefaultSize );
     itemBoxSizerColour->Add(m_FolderColorPreview, 0, wxALIGN_CENTER_VERTICAL|wxLEFT, FromDIP(10));
     UpdateFolderColorPreview();
@@ -496,6 +500,15 @@ void CDialogSettings::OnDsFolderColorChanged( wxColourPickerEvent& event )
 	m_FolderColor = event.GetColour();
 	UpdateFolderColorPreview();
 	event.Skip();
+}
+
+// restores the default folder color; the caller applies it on OK
+void CDialogSettings::OnDsFolderDefaultClick( wxCommandEvent& WXUNUSED(event) )
+{
+	m_FolderColor = wxColour( FOLDER_COLOR_DEFAULT );
+	if( m_FolderColorCtrl != NULL )
+		m_FolderColorCtrl->SetColour( m_FolderColor );
+	UpdateFolderColorPreview();
 }
 
 // renders a small folder icon in the current color as the picker's preview

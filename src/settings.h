@@ -115,6 +115,10 @@ public:
     /// wxEVT_COLOURPICKER_CHANGED event handler for ID_DS_FOLDERCOLOR
     void OnDsFolderColorChanged( wxColourPickerEvent& event );
 
+    /// wxEVT_BUTTON event handler for ID_DS_FOLDERDEFAULT: restores the
+    /// default folder color
+    void OnDsFolderDefaultClick( wxCommandEvent& event );
+
     /// rebuilds the small folder preview bitmap in the current color
     void UpdateFolderColorPreview();
 
@@ -220,7 +224,8 @@ private:
         ID_DS_USERNAME = 10066,
         ID_DS_PASSWORD = 10067,
         ID_DS_TEST_CONNECTION = 10068,
-        ID_DS_FOLDERCOLOR = 10069
+        ID_DS_FOLDERCOLOR = 10069,
+        ID_DS_FOLDERDEFAULT = 10070
     };
 ////@end CDialogSettings member variables
 

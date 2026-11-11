@@ -31,7 +31,8 @@ created by pre-2.0 versions must be converted once (see below).
   in consistent outline style (blue-accent catalog disc).
 - Folder icon color is configurable: trees and file lists show folders in a
   two-tone File-Explorer-like style, colored via Tools → Options → General
-  and stored in the settings.
+  (default amber `#FFD35C`, restorable with the *Default* button) and stored
+  in the settings.
 - Catalog structure version stayed at 24, so catalogs created with the
   modernized app still have the same schema — only the on-disk format (ODS)
   changed with the engine.

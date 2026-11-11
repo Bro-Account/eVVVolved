@@ -23,6 +23,10 @@
 #ifndef __UTILS_H__
 #define __UTILS_H__
 
+// the default color of the folder icons (File-Explorer amber); used by
+// CUtils::FolderIconColorFromConfig() and by the options dialog reset button
+#define FOLDER_COLOR_DEFAULT wxT("#FFD35C")
+
 #include <wx/string.h>
 #include <wx/msgdlg.h>
 #include <wx/image.h>

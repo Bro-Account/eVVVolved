@@ -520,7 +520,7 @@ wxIcon CUtils::GetFolderIconForPane( const wxArtID &id, const wxSize& size, cons
 
 wxColour CUtils::FolderIconColorFromConfig()
 {
-    wxColour c( wxT("#FFD35C") );	// Explorer amber, the default
+    wxColour c( FOLDER_COLOR_DEFAULT );	// Explorer amber
     wxConfigBase *conf = wxConfigBase::Get();
     if( conf != NULL ) {
         conf->SetPath( wxT("/Settings") );
