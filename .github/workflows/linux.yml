@@ -1,12 +1,14 @@
-# Continuous build for Linux (arm64), the counterpart of windows.yml.
+# Continuous build for Linux, the counterpart of windows.yml.
 #
-# Runs on a native arm64 runner so the artifact matches the Raspberry Pi
-# target (upstream Firebird 2.5 has no arm64 port; the bundled conversion
-# helper is assembled from Debian 8 arm64 packages by
-# scripts/fetch-firebird25-arm64.sh, so unlike the Windows artifact it does
-# include the helper). Dependency provisioning lives in
+# Builds both architectures the Linux targets come in:
+#   arm64 - native ubuntu-24.04-arm runner, matches the Raspberry Pi target
+#   x64   - regular ubuntu-24.04 runner
+# Upstream Firebird 2.5 has no Linux arm64/amd64 port; the bundled conversion
+# helper is assembled from Debian 8 (jessie) native packages by
+# scripts/fetch-firebird25.sh, so unlike the Windows artifact these do
+# include the helper. Dependency provisioning lives in
 # scripts/fetch-linux-deps.sh on purpose: it is the same script used for
-# local setup. The artifact needs the distribution wxWidgets/TagLib
+# local setup. The artifacts need the distribution wxWidgets/TagLib
 # libraries at run time, like a locally built tree.
 name: linux-build
 
@@ -22,8 +24,17 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  linux-arm64:
-    runs-on: ubuntu-24.04-arm
+  linux:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: arm64
+            runner: ubuntu-24.04-arm
+          - arch: x64
+            runner: ubuntu-24.04
+    name: linux-${{ matrix.arch }}
+    runs-on: ${{ matrix.runner }}
     timeout-minutes: 45
     steps:
       - name: Checkout
@@ -63,20 +74,39 @@ jobs:
           build/install/firebird/bin/isql -q -user SYSDBA -password masterkey \
             /tmp/smoke.fdb -i /tmp/q.sql -o /tmp/q.out
           grep -q 42 /tmp/q.out
-          # the Firebird 2.5 conversion helper reports its version
+          # the Firebird 2.5 helper reports its version and performs the
+          # actual conversion chain the app uses on old catalogs:
+          # create ODS 11.2 -> helper gbak backup -> Firebird 5 restore
           v="$(build/install/firebird-2.5/bin/gbak -z 2>&1 | head -1)"
           echo "$v"
           case "$v" in
             *LI-V2.5.3.26778*) ;;
             *) echo "unexpected helper version: $v" >&2; exit 1 ;;
           esac
+          cat > /tmp/old.sql <<'EOF'
+          CREATE DATABASE '/tmp/old.fdb';
+          CREATE TABLE F (I INTEGER);
+          INSERT INTO F VALUES (7);
+          COMMIT;
+          QUIT;
+          EOF
+          build/install/firebird-2.5/bin/isql -q -user SYSDBA -password masterkey \
+            -i /tmp/old.sql
+          build/install/firebird-2.5/bin/gbak -b -g /tmp/old.fdb /tmp/old.fbk \
+            -user SYSDBA -password masterkey
+          build/install/firebird/bin/gbak -c /tmp/old.fbk /tmp/new.fdb \
+            -user SYSDBA -password masterkey
+          printf 'SELECT I FROM F;\nQUIT;\n' > /tmp/q2.sql
+          build/install/firebird/bin/isql -q -user SYSDBA -password masterkey \
+            /tmp/new.fdb -i /tmp/q2.sql -o /tmp/q2.out
+          grep -q 7 /tmp/q2.out
 
       - name: Pack artifact
-        run: tar -czf vvv-linux-arm64.tar.gz -C build/install .
+        run: tar -czf "vvv-linux-${{ matrix.arch }}.tar.gz" -C build/install .
 
-      - name: Upload vvv-linux-arm64
+      - name: Upload vvv-linux-${{ matrix.arch }}
         uses: actions/upload-artifact@v5
         with:
-          name: vvv-linux-arm64
-          path: vvv-linux-arm64.tar.gz
+          name: vvv-linux-${{ matrix.arch }}
+          path: vvv-linux-${{ matrix.arch }}.tar.gz
           if-no-files-found: error

@@ -166,8 +166,14 @@ elseif( UNIX )
   # Windows and macOS builds use). Modern Firebird (3+) has no separate fbembed
   # library: the client library (libfbclient) runs the engine in-process when
   # opening local databases, so the runtime folder only matters at run time
-  # (see linux_specific/vvv-start.sh).
-  set( VVV_FIREBIRD_ROOT "${PROJECT_SOURCE_DIR}/deps/firebird-5.0.4-arm64" CACHE PATH "Firebird runtime folder" )
+  # (see linux_specific/vvv-start.sh). The folder suffix follows the host
+  # architecture (arm64 / x64), matching scripts/fetch-firebird5-linux.sh.
+  if( CMAKE_SYSTEM_PROCESSOR MATCHES "^(aarch64|arm64)" )
+    set( _vvv_fb_arch arm64 )
+  else()
+    set( _vvv_fb_arch x64 )
+  endif()
+  set( VVV_FIREBIRD_ROOT "${PROJECT_SOURCE_DIR}/deps/firebird-5.0.4-${_vvv_fb_arch}" CACHE PATH "Firebird runtime folder" )
   find_library( FB_LIB fbclient PATHS ${VVV_FIREBIRD_ROOT}/lib NO_DEFAULT_PATH )
   if( NOT FB_LIB )
     find_library( FB_LIB fbclient PATHS /usr/lib /usr/local/lib /opt/firebird/lib ${PROJECT_SOURCE_DIR}/firebird_runtime/firebird )
@@ -235,10 +241,10 @@ if( UNIX AND NOT APPLE )
   # accepts both layouts: firebird-2.5/<tool> and the bin/ of a Firebird
   # tarball (firebird-2.5/bin/<tool>). Staged from deps/ when present; without
   # it the app shows the "conversion helper is missing" message instead.
-  # The arm64 engine is a separate deps/firebird-2.5-arm64 folder, assembled
-  # by scripts/fetch-firebird25-arm64.sh (Windows ships its own x64 helper
-  # from deps/firebird-2.5, see the WIN32 block).
-  set( VVV_FB25_ROOT "${PROJECT_SOURCE_DIR}/deps/firebird-2.5-arm64" CACHE PATH "Firebird 2.5 arm64 conversion helper folder" )
+  # The arm64/x64 engines are separate deps/firebird-2.5-<arch> folders,
+  # assembled by scripts/fetch-firebird25.sh (Windows ships its own x64
+  # helper from deps/firebird-2.5, see the WIN32 block).
+  set( VVV_FB25_ROOT "${PROJECT_SOURCE_DIR}/deps/firebird-2.5-${_vvv_fb_arch}" CACHE PATH "Firebird 2.5 conversion helper folder" )
   if( EXISTS "${VVV_FB25_ROOT}" )
     file( GLOB VVV_FB25_FILES "${VVV_FB25_ROOT}/*.conf"
                               "${VVV_FB25_ROOT}/*.msg"

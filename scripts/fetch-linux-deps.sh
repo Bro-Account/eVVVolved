@@ -13,9 +13,9 @@
 #                            developed against TagLib 2)
 #   Firebird       5.0.4   - official Linux tarball into
 #                            deps/firebird-5.0.4-<arch> (fetch-firebird5-linux.sh)
-#   Firebird       2.5.3   - old-catalog conversion helper, native arm64
-#                            packages of Debian 8 into deps/firebird-2.5-arm64
-#                            (fetch-firebird25-arm64.sh; arm64 hosts only)
+#   Firebird       2.5.3   - old-catalog conversion helper, native arm64/amd64
+#                            packages of Debian 8 into deps/firebird-2.5-<arch>
+#                            (fetch-firebird25.sh)
 #
 # Every step is skipped when its target already looks complete, so the script
 # is safe to re-run. Set SKIP_WX=1 / SKIP_TAGLIB=1 / SKIP_FIREBIRD5=1 /
@@ -80,11 +80,7 @@ fi
 
 # --- Firebird 2.5 conversion helper ------------------------------------------
 if [ "${SKIP_FIREBIRD25:-0}" != "1" ]; then
-  if [ "${ARCH}" = "aarch64" ]; then
-    "${ROOT}/scripts/fetch-firebird25-arm64.sh"
-  else
-    echo "Skipping the Firebird 2.5 helper (fetch-firebird25-arm64.sh is arm64-only)"
-  fi
+  "${ROOT}/scripts/fetch-firebird25.sh"
 else
   echo "Skipping Firebird 2.5 helper (SKIP_FIREBIRD25=1)"
 fi

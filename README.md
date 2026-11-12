@@ -11,24 +11,19 @@ file system that holds files from many volumes.
 
 This is an independent continuation of [VVV](https://vvvapp.sourceforge.net) by
 Fulvio Senore and the VVV team. It started from the Apple Silicon fork by
-Sven Varkel and now focuses on Windows. The version 2.0 signals that catalogs
-created by pre-2.0 versions must be converted once (see below).
+Sven Varkel and is now developed for Windows, Linux and macOS. The version 2.0
+signals that catalogs created by pre-2.0 versions must be converted once (see
+below).
 
 ## What changed from VVV 1.5
 
-**Windows (the main platform here):**
+**All platforms:**
 
-- Native 64-bit build with CMake and Visual Studio (32-bit was dropped with 2.0).
-- Per-monitor high-DPI support: the whole UI, toolbar and icons scale with the
-  display; window and column layouts are stored DPI-independent.
-- Modernized toolchain: wxWidgets 3.2.8, TagLib 2.3, and the embedded
+- Modernized toolchain: wxWidgets 3.2, TagLib 2.3, and the embedded
   database engine moved from Firebird 2.1 to **Firebird 5**.
 - Old catalogs use the Firebird 2 on-disk format and are detected early, and
   the app can convert them itself (see below); command-line mode reports the
   needed conversion to `stderr` and no longer hangs.
-- Scanning a folder reads it in one pass instead of two (the old code walked
-  every directory twice, once for files and once for subfolders), and long
-  paths beyond the 260-character Windows limit are supported.
 - Fresh icon set: the toolbar and tree/list icons are Microsoft
   [Fluent UI System Icons](https://github.com/microsoft/fluentui-system-icons)
   in consistent outline style (blue-accent catalog disc).
@@ -39,6 +34,21 @@ created by pre-2.0 versions must be converted once (see below).
 - Catalog structure version stayed at 24, so catalogs created with the
   modernized app still have the same schema — only the on-disk format (ODS)
   changed with the engine.
+
+**Windows:**
+
+- Native 64-bit build with CMake and Visual Studio (32-bit was dropped with 2.0).
+- Per-monitor high-DPI support: the whole UI, toolbar and icons scale with the
+  display; window and column layouts are stored DPI-independent.
+- Scanning a folder reads it in one pass instead of two (the old code walked
+  every directory twice, once for files and once for subfolders), and long
+  paths beyond the 260-character Windows limit are supported.
+
+**Linux:**
+
+- arm64 (Raspberry Pi tested) and x64 builds; each ships a self-contained
+  Firebird 5 runtime plus the Firebird 2.5 engine that converts old catalogs,
+  staged by `scripts/fetch-linux-deps.sh`.
 
 **macOS (inherited from the Apple Silicon fork):**
 native arm64 build (wxWidgets 3.3, TagLib 2, Firebird 5 from Homebrew),
@@ -103,26 +113,27 @@ runnable as-is. `build-x64/` holds the CMake build tree.
 
 Windows builds are 64-bit only since VVV 2.0.
 
-## Building on Linux (arm64)
+## Building on Linux
 
-Tested on Raspberry Pi OS (Debian 13, aarch64). The distribution packages
-provide the toolchain and wxWidgets/TagLib; the Firebird runtimes come from
-the same self-contained `deps/` pattern as the other platforms:
+Tested on Raspberry Pi OS (Debian 13, aarch64); x64 Linux works the same way.
+The distribution packages provide the toolchain and wxWidgets/TagLib; the
+Firebird runtimes come from the same self-contained `deps/` pattern as the
+other platforms:
 
 ```bash
 scripts/fetch-linux-deps.sh      # apt packages, TagLib if < 2.0, Firebird 5 runtime
-                                 # and the Firebird 2.5 conversion helper (arm64)
+                                 # and the Firebird 2.5 conversion helper
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$PWD/build/install"
 cmake --build build -j
 cmake --install build
 build/install/vvv-start.sh       # sets the Firebird env and launches the app
 ```
 
-On other host architectures adjust the Firebird folders and pass
-`-DVVV_FIREBIRD_ROOT=<deps dir>` to CMake (upstream Firebird 5 ships x64
-Linux builds too; the 2.5 helper is arm64-only so far). The CI workflow
-`.github/workflows/linux.yml` builds the arm64 tree on
-`ubuntu-24.04-arm` and uploads a `vvv-linux-arm64` tarball artifact.
+The architecture is detected automatically (`deps/firebird-5.0.4-<arch>` and
+`deps/firebird-2.5-<arch>` with `<arch>` = arm64 or x64); pass
+`-DVVV_FIREBIRD_ROOT=…` / `-DVVV_FB25_ROOT=…` to override. The CI workflow
+`.github/workflows/linux.yml` builds both architectures (native arm64 runner
+plus x64) and uploads `vvv-linux-arm64` / `vvv-linux-x64` tarball artifacts.
 
 ### Installer
 
