@@ -1,0 +1,82 @@
+# Continuous build for Linux (arm64), the counterpart of windows.yml.
+#
+# Runs on a native arm64 runner so the artifact matches the Raspberry Pi
+# target (upstream Firebird 2.5 has no arm64 port; the bundled conversion
+# helper is assembled from Debian 8 arm64 packages by
+# scripts/fetch-firebird25-arm64.sh, so unlike the Windows artifact it does
+# include the helper). Dependency provisioning lives in
+# scripts/fetch-linux-deps.sh on purpose: it is the same script used for
+# local setup. The artifact needs the distribution wxWidgets/TagLib
+# libraries at run time, like a locally built tree.
+name: linux-build
+
+on:
+  push:
+    branches: [develop, main]
+  pull_request:
+    branches: [develop, main]
+  workflow_dispatch:
+
+concurrency:
+  group: linux-build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  linux-arm64:
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 45
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Provision dependencies
+        run: ./scripts/fetch-linux-deps.sh
+
+      - name: Build and stage
+        run: |
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_INSTALL_PREFIX="$PWD/build/install"
+          cmake --build build -j4
+          cmake --install build
+
+      - name: Smoke test
+        run: |
+          test -x build/install/vvv
+          test -x build/install/vvv-start.sh
+          # no unresolved shared libraries in the binary itself
+          if ldd build/install/vvv | grep "not found"; then
+            echo "vvv has unresolved libraries" >&2; exit 1
+          fi
+          # the bundled Firebird 5 embedded engine works end-to-end
+          export LD_LIBRARY_PATH="$PWD/build/install/firebird/lib"
+          export FIREBIRD="$PWD/build/install/firebird"
+          cat > /tmp/smoke.sql <<'EOF'
+          CREATE DATABASE '/tmp/smoke.fdb';
+          CREATE TABLE T (I INTEGER);
+          INSERT INTO T VALUES (42);
+          COMMIT;
+          QUIT;
+          EOF
+          build/install/firebird/bin/isql -q -user SYSDBA -password masterkey \
+            -i /tmp/smoke.sql
+          printf 'SELECT I FROM T;\nQUIT;\n' > /tmp/q.sql
+          build/install/firebird/bin/isql -q -user SYSDBA -password masterkey \
+            /tmp/smoke.fdb -i /tmp/q.sql -o /tmp/q.out
+          grep -q 42 /tmp/q.out
+          # the Firebird 2.5 conversion helper reports its version
+          v="$(build/install/firebird-2.5/bin/gbak -z 2>&1 | head -1)"
+          echo "$v"
+          case "$v" in
+            *LI-V2.5.3.26778*) ;;
+            *) echo "unexpected helper version: $v" >&2; exit 1 ;;
+          esac
+
+      - name: Pack artifact
+        run: tar -czf vvv-linux-arm64.tar.gz -C build/install .
+
+      - name: Upload vvv-linux-arm64
+        uses: actions/upload-artifact@v5
+        with:
+          name: vvv-linux-arm64
+          path: vvv-linux-arm64.tar.gz
+          if-no-files-found: error

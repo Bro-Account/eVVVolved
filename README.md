@@ -1,6 +1,7 @@
 # VVV (Virtual Volumes View) 2.0 — eVVVolved
 
 [![Windows build](https://github.com/Bro-Account/eVVVolved/actions/workflows/windows.yml/badge.svg)](https://github.com/Bro-Account/eVVVolved/actions/workflows/windows.yml)
+[![Linux build](https://github.com/Bro-Account/eVVVolved/actions/workflows/linux.yml/badge.svg)](https://github.com/Bro-Account/eVVVolved/actions/workflows/linux.yml)
 
 ![VVV 2.0 browsing a catalog](docs/screenshot.png)
 
@@ -101,6 +102,27 @@ application, the wxWidgets DLLs and the Firebird 5 runtime — self-contained,
 runnable as-is. `build-x64/` holds the CMake build tree.
 
 Windows builds are 64-bit only since VVV 2.0.
+
+## Building on Linux (arm64)
+
+Tested on Raspberry Pi OS (Debian 13, aarch64). The distribution packages
+provide the toolchain and wxWidgets/TagLib; the Firebird runtimes come from
+the same self-contained `deps/` pattern as the other platforms:
+
+```bash
+scripts/fetch-linux-deps.sh      # apt packages, TagLib if < 2.0, Firebird 5 runtime
+                                 # and the Firebird 2.5 conversion helper (arm64)
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$PWD/build/install"
+cmake --build build -j
+cmake --install build
+build/install/vvv-start.sh       # sets the Firebird env and launches the app
+```
+
+On other host architectures adjust the Firebird folders and pass
+`-DVVV_FIREBIRD_ROOT=<deps dir>` to CMake (upstream Firebird 5 ships x64
+Linux builds too; the 2.5 helper is arm64-only so far). The CI workflow
+`.github/workflows/linux.yml` builds the arm64 tree on
+`ubuntu-24.04-arm` and uploads a `vvv-linux-arm64` tarball artifact.
 
 ### Installer
 
