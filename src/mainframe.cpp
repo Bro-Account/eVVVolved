@@ -2345,6 +2345,15 @@ void CMainFrame::OpenDatabase( wxString fileName, int expectedVersion ) {
 
 	CBaseDB *db = CBaseDB::GetDatabase();
 	if( db != NULL ) {
+		// the catalog may have been switched to read-write for an editing
+		// session: store it read-only again before closing it
+		try {
+			if( !db->IsReadOnly() )
+				db->SetReadOnly( true );
+		}
+		catch( CDataErrorException& ) {
+			// no exclusive access right now: the next open repairs the flag
+		}
 		CBaseDB::GetDatabase()->Disconnect();
 		CBaseDB::DeleteFirebirdDatabase();
 	}
@@ -2457,6 +2466,22 @@ void CMainFrame::OpenDatabase( wxString fileName, int expectedVersion ) {
 	LoadVirtualTreeControl();
 
 	DeleteAllListControlItems();
+
+	// Catalogs are stored flagged read-only: the engine then never writes to
+	// the file, so opening a catalog just to read it does not change it (and
+	// does not make Resilio sync the whole file). This is also the one-time
+	// repair for catalogs created before the flag became the default.
+	if( !DBConnectionData.connectToServer ) {
+		CBaseDB* opened = CBaseDB::GetDatabase();
+		if( opened != NULL && !opened->IsReadOnly() ) {
+			try {
+				opened->SetReadOnly( true );
+			}
+			catch( CDataErrorException& e ) {
+				CUtils::MsgErr( _("The catalog could not be marked read-only:\n\n") + CUtils::std2wx( e.what() ) + _("\n\nIt is opened read-write, so changes may be written to the file while it is used.") );
+			}
+		}
+	}
 
 	// stores the file in the MRU list
 	m_fileHistory->AddFileToHistory( fileName );

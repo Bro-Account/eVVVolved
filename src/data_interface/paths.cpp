@@ -66,6 +66,7 @@ wxString CPaths::GetFullPath( long PathID ) {
 
 void CPaths::UpdateDescription( long PathID, const wxString& descr ) {
 
+	CBaseDB::GetDatabase()->EnsureWritable();
 	switch( DatabaseType ) {
 		case dbtFirebird:
 			FB_UpdateDescription( PathID, descr );

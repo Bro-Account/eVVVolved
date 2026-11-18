@@ -364,6 +364,15 @@ int CVvvApp::OnExit()
 {    
 	CBaseDB *db = CBaseDB::GetDatabase();
 	if( db != NULL ) {
+		// a catalog edited during this session is stored read-only again, so
+		// the next open (and any file sync) does not see changes; if this
+		// fails the next start repairs the flag
+		try {
+			if( !db->IsReadOnly() )
+				db->SetReadOnly( true );
+		}
+		catch( ... ) {
+		}
 		CBaseDB::GetDatabase()->Disconnect();
 		CBaseDB::DeleteFirebirdDatabase();
 	}

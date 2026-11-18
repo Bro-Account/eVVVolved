@@ -42,6 +42,13 @@ public:
 	void Connect(void);
 	
 	void Disconnect(void);
+
+	// true if the catalog is currently read-only
+	bool IsReadOnly(void) { return isReadOnly; };
+	// switches the persistent read-only flag (closes and reopens the catalog)
+	void SetReadOnly( bool readOnly );
+	// switches to read-write if the catalog is read-only
+	void EnsureWritable(void);
 	
 	// returns the database version
 	int GetDatabaseVersion(void);
@@ -87,6 +94,8 @@ protected:
 	wxString serverName, databaseName, userName, password;
 	IBPP::Database db;
 	IBPP::Transaction tr;
+	// true when the catalog is attached read-only (persistent header flag)
+	bool isReadOnly;
 };
 
 

@@ -572,6 +572,12 @@ namespace IBPP
 		virtual const char* CharSet() const = 0;
 		virtual const char* CreateParams() const = 0;
 
+		// Requests a persistent change of the database read-only flag while
+		// attaching (Firebird isc_dpb_set_db_readonly). The flag is stored in
+		// the database header page, so this needs exclusive access. The
+		// attachment itself then uses the requested mode.
+		virtual void SetAttachReadOnlyMode(bool readOnly) = 0;
+
 		virtual void Info(int* ODS, int* ODSMinor, int* PageSize,
 			int* Pages,	int* Buffers, int* Sweep, bool* Sync,
 			bool* Reserve) = 0;

@@ -35,6 +35,7 @@ CBaseRec::DBType CBaseRec::DatabaseType = dbtUndefined;
 
 // add this record to the database
 void CBaseRec::DbInsert(void) {
+	CBaseDB::GetDatabase()->EnsureWritable();
 	switch( DatabaseType ) {
 		case dbtFirebird:
 			FB_DbInsert();
@@ -44,6 +45,7 @@ void CBaseRec::DbInsert(void) {
 
 // update this record into the database
 void CBaseRec::DbUpdate(void) {
+	CBaseDB::GetDatabase()->EnsureWritable();
 	switch( DatabaseType ) {
 		case dbtFirebird:
 			FB_DbUpdate();
@@ -53,6 +55,7 @@ void CBaseRec::DbUpdate(void) {
 
 // delete this record from the database
 void CBaseRec::DbDelete(void) {
+	CBaseDB::GetDatabase()->EnsureWritable();
 	switch( DatabaseType ) {
 		case dbtFirebird:
 			FB_DbDelete();

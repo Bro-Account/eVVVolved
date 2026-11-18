@@ -62,6 +62,7 @@ void CFiles::DBStartSearchFolderFilesSQL( long folderID, const wxString& wh  )
 
 void CFiles::UpdateDescription( long FileID, const wxString& descr ) {
 
+	CBaseDB::GetDatabase()->EnsureWritable();
 	switch( DatabaseType ) {
 		case dbtFirebird:
 			FB_UpdateDescription( FileID, descr );
@@ -71,6 +72,7 @@ void CFiles::UpdateDescription( long FileID, const wxString& descr ) {
 
 void CFiles::UpdateDateSize( long FileID, const wxDateTime& fdt, const wxLongLong& fs ) {
 
+	CBaseDB::GetDatabase()->EnsureWritable();
 	switch( DatabaseType ) {
 		case dbtFirebird:
 			FB_UpdateDateSize( FileID, fdt, fs );

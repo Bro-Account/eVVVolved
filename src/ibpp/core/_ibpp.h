@@ -824,6 +824,8 @@ class DatabaseImpl : public IBPP::IDatabase
     std::string mRoleName;	  	// Role used for the duration of the connection
 	std::string mCharSet;	  	// Character Set used for the connection
 	std::string mCreateParams;	// Other parameters (creation only)
+	bool mSetDbReadOnly;		// true when the next attach changes the read-only flag
+	bool mDbReadOnly;			// requested read-only mode for that attach
 
 	int mDialect;							// 1 if IB5, 1 or 3 if IB6/FB1
 	std::vector<TransactionImpl*> mTransactions;// Table of Transaction*
@@ -863,6 +865,8 @@ public:
 	const char* RoleName() const		{ return mRoleName.c_str(); }
 	const char* CharSet() const			{ return mCharSet.c_str(); }
 	const char* CreateParams() const	{ return mCreateParams.c_str(); }
+
+	void SetAttachReadOnlyMode(bool readOnly);
 
 	void Info(int* ODSMajor, int* ODSMinor,
 		int* PageSize, int* Pages, int* Buffers, int* Sweep,

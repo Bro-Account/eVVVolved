@@ -49,8 +49,11 @@ CCatalogVolumeFunctions::~CCatalogVolumeFunctions(void)
 
 void CCatalogVolumeFunctions::CatalogVolume( wxString volumePath, wxString volumeName ) {
 
-	// starts a transaction
+	// cataloging writes to the catalog: switch it to read-write if needed
 	CBaseDB* db = CBaseDB::GetDatabase();
+	db->EnsureWritable();
+
+	// starts a transaction
 	db->TransactionStart();
 
 	wxFileName dirName( volumePath, wxEmptyString );
@@ -296,8 +299,11 @@ void CCatalogVolumeFunctions::AddFolderToDB( wxString &path, wxString &fileName,
 
 void CCatalogVolumeFunctions::UpdateVolume( wxString volumePath, long volumeID ) {
 
-	// starts a transaction
+	// updating a volume writes to the catalog: switch it to read-write if needed
 	CBaseDB* db = CBaseDB::GetDatabase();
+	db->EnsureWritable();
+
+	// starts a transaction
 	db->TransactionStart();
 
 	wxFileName dirName( volumePath, wxEmptyString );

@@ -42,6 +42,7 @@ void CVirtualPaths::DBStartQueryListPaths( CNullableLong FathID ) {
 }
 
 void CVirtualPaths::AppendPhysicalPath( long PhysicalPathID, long VirtualPathID ) {
+	CBaseDB::GetDatabase()->EnsureWritable();
 	switch( DatabaseType ) {
 		case dbtFirebird:
 			FB_AppendPhysicalPath( PhysicalPathID, VirtualPathID );
@@ -51,6 +52,7 @@ void CVirtualPaths::AppendPhysicalPath( long PhysicalPathID, long VirtualPathID 
 
 
 void CVirtualPaths::AppendVolume( long VolumeID, long PhysicalPathID, long VirtualPathID ) {
+	CBaseDB::GetDatabase()->EnsureWritable();
 	switch( DatabaseType ) {
 		case dbtFirebird:
 			FB_AppendVolume( VolumeID, PhysicalPathID, VirtualPathID );
@@ -59,6 +61,7 @@ void CVirtualPaths::AppendVolume( long VolumeID, long PhysicalPathID, long Virtu
 }
 
 void CVirtualPaths::Rename( long VirtualPathID, wxString newName ) {
+	CBaseDB::GetDatabase()->EnsureWritable();
 	switch( DatabaseType ) {
 		case dbtFirebird:
 			FB_Rename( VirtualPathID, newName );
@@ -67,6 +70,7 @@ void CVirtualPaths::Rename( long VirtualPathID, wxString newName ) {
 }
 
 void CVirtualPaths::AddPhysicalFile( long PhysicalFileID, long VirtualPathID ) {
+	CBaseDB::GetDatabase()->EnsureWritable();
 	switch( DatabaseType ) {
 		case dbtFirebird:
 			FB_AddPhysicalFile( PhysicalFileID, VirtualPathID );

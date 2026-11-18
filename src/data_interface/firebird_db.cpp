@@ -56,12 +56,37 @@ static bool IsUnsupportedOldCatalog( const wxString& fileName )
 	return ( odsVersion & 0xFF ) <= 11;
 }
 
+// A catalog flagged read-only in its header page (hdr_read_only, flags at
+// offset 42, bit 0x20) is never written by the engine: no garbage collection,
+// no transaction inventory updates. This is what keeps a synced catalog file
+// untouched when it is only opened to read it. The flag must be read before
+// attaching: attaching an unflagged catalog already writes a few bytes.
+static bool IsCatalogReadOnly( const wxString& fileName )
+{
+	if( fileName.empty() || !wxFileName::FileExists( fileName ) )
+		return false;
+
+	wxFile file;
+	if( !file.Open( fileName, wxFile::read ) )
+		return false;
+
+	unsigned char header[44] = { 0 };
+	const ssize_t bytesRead = file.Read( header, sizeof(header) );
+	file.Close();
+	if( bytesRead != (ssize_t) sizeof(header) || header[0] != 1 )
+		return false;
+
+	const unsigned int flags = header[42] | ( (unsigned int) header[43] << 8 );
+	return ( flags & 0x20 ) != 0;
+}
+
 CFirebirdDB::CFirebirdDB( wxString serverName, wxString databaseName, wxString userName, wxString password )
 {
 	this->serverName = serverName;
 	this->databaseName = databaseName;
 	this->userName = userName;
 	this->password = password;
+	isReadOnly = false;
 
 	db = DatabaseFactory( CUtils::wx2std(serverName), CUtils::wx2std(databaseName), CUtils::wx2std(userName), CUtils::wx2std(password) );
 	tr = NULL;
@@ -72,11 +97,18 @@ CFirebirdDB::~CFirebirdDB(void)
 }
 
 void CFirebirdDB::Connect(void) {
+	isReadOnly = false;
+
 	// A catalog created by VVV 1.5 or older cannot be opened by Firebird 5.
 	// Check the ODS version first so the user gets the "convert the catalog"
 	// message instead of an IBPP LogicException.
-	if( serverName.empty() && IsUnsupportedOldCatalog( databaseName ) ) {
-		throw CDataErrorException( wxT("This catalog uses an unsupported on-disk structure."), CDataErrorException::ecWrongODS );
+	if( serverName.empty() ) {
+		if( IsUnsupportedOldCatalog( databaseName ) )
+			throw CDataErrorException( wxT("This catalog uses an unsupported on-disk structure."), CDataErrorException::ecWrongODS );
+
+		// A flagged catalog is attached read-only by the engine, so this plain
+		// attach does not modify the file at all.
+		isReadOnly = IsCatalogReadOnly( databaseName );
 	}
 
 	try {
@@ -111,6 +143,56 @@ bool CFirebirdDB::TestServerConnection( wxString serverName ) {
 
 void CFirebirdDB::Disconnect(void) {
 	db->Disconnect();
+}
+
+void CFirebirdDB::SetReadOnly( bool readOnly ) {
+	// Only embedded (local file) catalogs: the persistent header flag is what
+	// keeps a synced catalog file untouched. Server catalogs keep their old
+	// behaviour.
+	if( !serverName.empty() )
+		return;
+	if( isReadOnly == readOnly )
+		return;
+	if( !db->Connected() )
+		return;	// nothing to switch: the next attach picks up the header flag
+
+	const bool wasReadOnly = isReadOnly;
+	if( db->Connected() )
+		db->Disconnect();
+	tr = NULL;	// Disconnect() rolled back any transaction on the old attachment
+
+	// The flag change is part of the DPB of the attach: the new attachment
+	// already uses the requested mode, so no second attach is needed.
+	db = DatabaseFactory( CUtils::wx2std(serverName), CUtils::wx2std(databaseName), CUtils::wx2std(userName), CUtils::wx2std(password) );
+	db->SetAttachReadOnlyMode( readOnly );
+	try {
+		db->Connect();
+		isReadOnly = readOnly;
+	}
+	catch( IBPP::SQLException& ) {
+		// Changing the flag needs exclusive access. Reopen in the previous mode
+		// so the caller can keep using the catalog, then report the failure.
+		db = DatabaseFactory( CUtils::wx2std(serverName), CUtils::wx2std(databaseName), CUtils::wx2std(userName), CUtils::wx2std(password) );
+		try {
+			db->Connect();
+			isReadOnly = wasReadOnly;
+		}
+		catch( ... ) {
+		}
+		throw CDataErrorException( wxT("The catalog is in use by another program, so its read-only mode could not be changed. Close the other program and try again."), CDataErrorException::ecCatalogInUse );
+	}
+}
+
+void CFirebirdDB::EnsureWritable(void) {
+	if( !isReadOnly )
+		return;
+	if( tr != NULL ) {
+		// A write inside an already started transaction cannot switch the
+		// attachment mode: the caller must call EnsureWritable() before it
+		// starts the transaction.
+		throw CDataErrorException( wxT("The catalog is read-only and cannot be switched to editing mode now."), CDataErrorException::ecCatalogInUse );
+	}
+	SetReadOnly( false );
 }
 
 void CFirebirdDB::TransactionStart( bool readOnly ) {
@@ -189,6 +271,9 @@ int CFirebirdDB::GetDatabaseVersion(void) {
 
 void CFirebirdDB::UpgradeDatabase( int currentVersion, int finalDBVersion ) {
 
+	// an upgrade writes to the catalog, so a read-only one must be switched
+	EnsureWritable();
+
 	// open the database containing the metadata changes and reads them
 	Database upgDb = DatabaseFactory( CUtils::wx2std(serverName), CUtils::wx2std(CUtils::GetStructUpdateDbName()), CUtils::wx2std(userName), CUtils::wx2std(password) );
 	upgDb->Connect();
@@ -230,6 +315,9 @@ void CFirebirdDB::UpgradeDatabase( int currentVersion, int finalDBVersion ) {
 }
 
 void CFirebirdDB::UpdateStatistics( UpdateStatisticsTables ust ) {
+
+	// statistics are stored in the catalog: this is a write
+	EnsureWritable();
 
 	bool inTransaction = TransactionIsOpened();
 	if( !inTransaction ) {

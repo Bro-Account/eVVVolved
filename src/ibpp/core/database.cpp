@@ -77,6 +77,13 @@ void DatabaseImpl::Create(int dialect)
 	Disconnect();
 }
 
+void DatabaseImpl::SetAttachReadOnlyMode(bool readOnly)
+{
+	// Only affects the next attach: the flag change is part of the DPB.
+	mSetDbReadOnly = true;
+	mDbReadOnly = readOnly;
+}
+
 void DatabaseImpl::Connect()
 {
 	if (mHandle != 0) return;	// Already connected
@@ -92,6 +99,8 @@ void DatabaseImpl::Connect()
     dpb.Insert(isc_dpb_password, mUserPassword.c_str());
     if (! mRoleName.empty()) dpb.Insert(isc_dpb_sql_role_name, mRoleName.c_str());
     if (! mCharSet.empty()) dpb.Insert(isc_dpb_lc_ctype, mCharSet.c_str());
+	if (mSetDbReadOnly)
+		dpb.Insert(isc_dpb_set_db_readonly, char(mDbReadOnly ? 1 : 0));
 
 	std::string connect;
 	if (! mServerName.empty())
@@ -468,6 +477,7 @@ DatabaseImpl::DatabaseImpl(const std::string& ServerName, const std::string& Dat
 	mServerName(ServerName), mDatabaseName(DatabaseName),
 	mUserName(UserName), mUserPassword(UserPassword), mRoleName(RoleName),
 	mCharSet(CharSet), mCreateParams(CreateParams),
+	mSetDbReadOnly(false), mDbReadOnly(false),
 	mDialect(3)
 {
 }

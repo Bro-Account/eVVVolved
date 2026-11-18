@@ -61,6 +61,16 @@ public:
 	// tries to connect to a server: it returns true if the connection is succesful, false otherwise
 	virtual bool TestServerConnection( wxString serverName ) = 0;
 
+	// returns true if the catalog is currently read-only: the engine then
+	// guarantees that it does not write anything to the file
+	virtual bool IsReadOnly(void) = 0;
+	// switches the persistent read-only flag of the catalog. This closes and
+	// reopens the attachment and needs exclusive access to the file.
+	virtual void SetReadOnly( bool readOnly ) = 0;
+	// makes sure that the catalog can be written: switches it to read-write
+	// when it is read-only, does nothing when it is already writable
+	virtual void EnsureWritable(void) = 0;
+
 	// creates and starts a transaction
 	virtual void TransactionStart( bool readOnly = false ) = 0;
 	// commit the transaction
