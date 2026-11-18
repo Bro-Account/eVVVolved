@@ -137,7 +137,21 @@ void DatabaseImpl::Connect()
 		throw SQLExceptionImpl(status, "Database::Connect", _("isc_database_info failed"));
 	}
 
-	int ODS = result.GetValue(isc_info_ods_version);
+	int ODS;
+	try
+	{
+		ODS = result.GetValue(isc_info_ods_version);
+	}
+	catch (IBPP::LogicException&)
+	{
+		// The attach reported no error, but the header could not be read: this
+		// happens when the file is locked by another process. Detach before
+		// reporting it, so that no half-open handle is left behind.
+		status.Reset();
+	    (*gds.Call()->m_detach_database)(status.Self(), &mHandle);
+        mHandle = 0;     // Should be, but better be sure...
+		throw;
+	}
 	if (ODS <= 9)
 	{
 		status.Reset();
@@ -147,7 +161,17 @@ void DatabaseImpl::Connect()
 			_("Unsupported Server : wrong ODS version (%d), at least '10' required."), ODS);
 	}
 
-	mDialect = result.GetValue(isc_info_db_SQL_dialect);
+	try
+	{
+		mDialect = result.GetValue(isc_info_db_SQL_dialect);
+	}
+	catch (IBPP::LogicException&)
+	{
+		status.Reset();
+	    (*gds.Call()->m_detach_database)(status.Self(), &mHandle);
+        mHandle = 0;     // Should be, but better be sure...
+		throw;
+	}
 	if (mDialect != 1 && mDialect != 3)
 	{
 		status.Reset();

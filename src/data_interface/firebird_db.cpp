@@ -25,8 +25,23 @@
 
 #include <wx/file.h>
 #include <wx/filename.h>
+#include <wx/log.h>
 
 using namespace IBPP;
+
+// The embedded engine needs exclusive access to the catalog file. When another
+// program holds it open the engine's own failure is unreliable (the attach can
+// even appear to succeed and leave the engine in a state where the follow-up
+// header probe crashes), so check the file before handing it over.
+static bool CatalogFileIsLocked( const wxString& fileName )
+{
+	if( fileName.empty() || !wxFileName::FileExists( fileName ) )
+		return false;
+
+	wxLogNull noLog;	// a failure here is expected, not an error to report
+	wxFile file;
+	return !file.Open( fileName, wxFile::read );
+}
 
 // Firebird 5 refuses to open a catalog created by VVV 1.5 or older (Firebird
 // 2.x, ODS 11). Its attach error does not always reach IBPP as a SQLException
@@ -38,6 +53,7 @@ static bool IsUnsupportedOldCatalog( const wxString& fileName )
 	if( fileName.empty() || !wxFileName::FileExists( fileName ) )
 		return false;
 
+	wxLogNull noLog;
 	wxFile file;
 	if( !file.Open( fileName, wxFile::read ) )
 		return false;
@@ -66,6 +82,7 @@ static bool IsCatalogReadOnly( const wxString& fileName )
 	if( fileName.empty() || !wxFileName::FileExists( fileName ) )
 		return false;
 
+	wxLogNull noLog;
 	wxFile file;
 	if( !file.Open( fileName, wxFile::read ) )
 		return false;
@@ -103,6 +120,9 @@ void CFirebirdDB::Connect(void) {
 	// Check the ODS version first so the user gets the "convert the catalog"
 	// message instead of an IBPP LogicException.
 	if( serverName.empty() ) {
+		if( CatalogFileIsLocked( databaseName ) )
+			throw CDataErrorException( wxT("The catalog could not be opened: it may be in use by another program."), CDataErrorException::ecCatalogInUse );
+
 		if( IsUnsupportedOldCatalog( databaseName ) )
 			throw CDataErrorException( wxT("This catalog uses an unsupported on-disk structure."), CDataErrorException::ecWrongODS );
 
@@ -120,6 +140,13 @@ void CFirebirdDB::Connect(void) {
 			throw CDataErrorException( e.ErrorMessage(), ec );
 		else
 			throw;
+	}
+	catch( IBPP::LogicException& ) {
+		// IBPP reports a LogicException when the attach itself did not fail but
+		// the database header could not be read. In practice this is a file
+		// that another program holds open: embedded Firebird needs exclusive
+		// access to the catalog file.
+		throw CDataErrorException( wxT("The catalog could not be opened: it may be in use by another program."), CDataErrorException::ecCatalogInUse );
 	}
 }
 

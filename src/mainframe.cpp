@@ -2374,6 +2374,12 @@ void CMainFrame::OpenDatabase( wxString fileName, int expectedVersion ) {
 				CUtils::MsgErr( _("Incorrect username or password for the following database:\n\n") + fileName );
 				errorOpeningDB = true;
 				break;
+			case CDataErrorException::ecCatalogInUse:
+				// Embedded Firebird needs exclusive access to the catalog file, so
+				// this is also what a second program holding the catalog looks like.
+				CUtils::MsgErr( _("The catalog could not be opened:\n\n") + fileName + _("\n\nIt may be in use by another program, for example another copy of VVV. Close that program and try again.") );
+				errorOpeningDB = true;
+				break;
 			case CDataErrorException::ecWrongODS:
 				// The conversion is offered once the main frame is on screen (see wxEVT_SHOW):
 				// never ask from here, this runs while the main frame is being created.
