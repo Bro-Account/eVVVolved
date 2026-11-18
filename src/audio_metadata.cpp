@@ -24,6 +24,7 @@
 
 #include <fileref.h>
 #include <tag.h>
+#include <taglib.h>   // TAGLIB_MAJOR_VERSION, for the length() rename below
 
 wxArrayString CAudioMetadata::m_AudioExtensions;
 
@@ -115,7 +116,14 @@ bool CAudioMetadata::ReadAudioMetadata( wxString fileName, CFilesAudioMetadata& 
 			metaData.SampleRate = i;
 			found = true;
 		}
+		// TagLib 2 renamed AudioProperties::length() to lengthInSeconds()
+		// (the old name is a deprecated alias there); older 1.x builds only
+		// have length().
+#if defined(TAGLIB_MAJOR_VERSION) && TAGLIB_MAJOR_VERSION >= 2
+		i = properties->lengthInSeconds();
+#else
 		i = properties->length();
+#endif
 		if( i != 0 ) {
 			metaData.Length = i;
 			found = true;
