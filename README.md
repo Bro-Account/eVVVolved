@@ -34,6 +34,12 @@ below).
 - Catalog structure version stayed at 24, so catalogs created with the
   modernized app still have the same schema — only the on-disk format (ODS)
   changed with the engine.
+- Local catalogs are stored **read-only**: opening, browsing or searching a
+  catalog no longer writes to the file (byte-identical, same timestamp), so
+  file-sync tools and incremental backups do not re-transfer a multi-GB
+  catalog after every open. The flag is switched transparently while you edit
+  and restored when the catalog is closed — see *Opening a catalog does not
+  modify it* below.
 
 **Windows:**
 
@@ -57,7 +63,9 @@ self-contained `VVV.app`, old-catalog conversion inside the app.
 ## Converting catalogs from VVV 1.5 and older
 
 Old catalogs use the Firebird 2 on-disk format (ODS 11), and Firebird 5 cannot
-open it. They must be converted once.
+open it. They must be converted once. Converted catalogs are stored read-only
+(see *Opening a catalog does not modify it* below), so browsing them later
+leaves the file untouched.
 
 - **Windows / Linux:** the app converts the catalog in place. Open the old
   catalog, answer Yes, and the app replaces the file with its new-format copy
@@ -185,6 +193,31 @@ optimal size is a backup/restore cycle — the old-catalog conversion works this
 way (the large size reductions in testing came from that rebuild), and the
 **Compact** command in the File menu performs the same cycle on a current
 catalog.
+
+## Opening a catalog does not modify it
+
+Local (embedded) catalogs are stored with the database engine's persistent
+read-only flag (`hdr_read_only`). A flagged catalog is attached in a mode
+where the engine performs no writes at all — no garbage collection, no
+transaction inventory updates — so opening, browsing or searching a catalog
+leaves the file byte-identical, with an unchanged timestamp.
+
+That matters when catalogs live in a synced folder (Resilio, Dropbox,
+OneDrive, …) or are picked up by an incremental backup: previously every open
+rewrote a few pages, which made those tools transfer the whole multi-GB file
+again.
+
+Editing works as before: the first change switches the flag for the session
+(one quick re-attach — no restart, no visible effect), and the catalog is
+marked read-only again when you close it or exit the app. If the app is killed
+while editing, the next start repairs the flag. Catalogs created before this
+change are unflagged, so their first open rewrites the file once; the
+converter already produces flagged catalogs.
+
+While a catalog is open, the embedded engine holds it exclusively: starting a
+second VVV on the same catalog, or opening it while another program holds it,
+reports that the catalog may be in use by another program. Catalogs on a
+remote Firebird server are unaffected.
 
 ## Security notes
 
