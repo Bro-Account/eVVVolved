@@ -624,6 +624,8 @@ BEGIN_EVENT_TABLE( CMainFrame, wxFrame )
     EVT_UPDATE_UI( ID_VIEW_COLLAPSE, CMainFrame::OnViewCollapseUpdate )
     EVT_MENU( ID_VIEW_TOOLBAR, CMainFrame::OnViewToolbarClick )
     EVT_MENU( ID_VIEW_STATUS_BAR, CMainFrame::OnViewStatusBarClick )
+    EVT_MENU( ID_VIEW_FOLDER_SIZES, CMainFrame::OnViewFolderSizesClick )
+    EVT_UPDATE_UI( ID_VIEW_FOLDER_SIZES, CMainFrame::OnViewFolderSizesUpdate )
     EVT_MENU( ID_MENU_OPENFILE_FOLDER, CMainFrame::OnMenuOpenfileFolderClick )
     EVT_UPDATE_UI( ID_MENU_OPENFILE_FOLDER, CMainFrame::OnMenuOpenfileFolderUpdate )
 #if defined(__WXMSW__) || defined(__WXGTK__)
@@ -852,6 +854,8 @@ bool CMainFrame::Create( wxWindow* parent, wxWindowID id, const wxString& captio
 	}
 	DBConnectionData.password = pwd;
 	pConfig->Read( wxT("AlternateRowColors"), &m_AlternateRowColors, false );
+	pConfig->Read( wxT("ShowFolderSizes"), &m_ShowFolderSizes, true );
+	GetMenuBar()->Check( ID_VIEW_FOLDER_SIZES, m_ShowFolderSizes );
 
     // read search settings
 	long ltmp;
@@ -923,6 +927,8 @@ void CMainFrame::Init()
 
 	m_CurrentlyShowingAudioMetadata = false;
 	m_IgnoreTreeCtrlEvents = false;
+
+	m_ShowFolderSizes = true;
 }
 
 /*!
@@ -979,6 +985,8 @@ void CMainFrame::CreateControls()
     itemMenu35->Check(ID_VIEW_TOOLBAR, true);
     itemMenu35->Append(ID_VIEW_STATUS_BAR, _("Status &Bar"), wxEmptyString, wxITEM_CHECK);
     itemMenu35->Check(ID_VIEW_STATUS_BAR, true);
+    itemMenu35->Append(ID_VIEW_FOLDER_SIZES, _("Show folder &sizes"), wxEmptyString, wxITEM_CHECK);
+    itemMenu35->Check(ID_VIEW_FOLDER_SIZES, true);
     menuBar->Append(itemMenu35, _("Vie&w"));
     wxMenu* itemMenu47 = new wxMenu;
     itemMenu47->Append(ID_MENU_OPENFILE_FOLDER, _("Open with default program"), wxEmptyString, wxITEM_NORMAL);
@@ -1770,6 +1778,7 @@ CMainFrame::~CMainFrame() {
 	if( pwd != wxEmptyString )	pwd = CUtils::Encrypt( pwd );
 	pConfig->Write( wxT("Password"),  pwd );
 	pConfig->Write( wxT("AlternateRowColors"), m_AlternateRowColors );
+	pConfig->Write( wxT("ShowFolderSizes"), m_ShowFolderSizes );
 
     // search options
 	pConfig->Write( wxT("SearchFileNameSelection"), m_FilenameRadioBox->GetSelection() );
@@ -1957,6 +1966,12 @@ void CMainFrame::ShowFolderFiles( wxTreeItemId itemID ) {
 	CFiles files;
 	CFilesAudioMetadata fam;
 	bool foundAudioFiles = false;
+
+	// the recursive sizes of all direct subfolders, computed in one query
+	std::map<long, wxLongLong> folderSizes;
+	if( m_ShowFolderSizes )
+		CPaths::GetChildrenFullSizes( itemData->GetPathID(), folderSizes );
+
 	files.DBStartQueryListFiles( itemData->GetPathID() );
 	while( !files.IsEOF() ) {
 
@@ -1975,7 +1990,16 @@ void CMainFrame::ShowFolderFiles( wxTreeItemId itemID ) {
 		item.SetMask( wxLIST_MASK_STATE|wxLIST_MASK_TEXT|wxLIST_MASK_IMAGE|wxLIST_MASK_DATA );
 		int i = lctl->InsertItem( item );
 		lctl->SetItem( i, 0, files.FileName, imageIndex );
-		if( files.IsFolder() ) s = wxEmptyString; else s = CUtils::HumanReadableFileSize(files.FileSize);
+		wxLongLong itemSize = files.FileSize;
+		if( files.IsFolder() ) {
+			if( m_ShowFolderSizes ) {
+				std::map<long, wxLongLong>::const_iterator it = folderSizes.find( files.PathFileID.IsNull() ? 0 : (long) files.PathFileID );
+				if( it != folderSizes.end() ) itemSize = it->second;
+				s = CUtils::HumanReadableFileSize( itemSize );
+			}
+			else s = wxEmptyString;
+		}
+		else s = CUtils::HumanReadableFileSize(files.FileSize);
 		lctl->SetItem( i, 1, s );
 		lctl->SetItem( i, 2, files.FileExt );
         if( files.DateTime.IsValid() ) {
@@ -1985,7 +2009,7 @@ void CMainFrame::ShowFolderFiles( wxTreeItemId itemID ) {
 		    lctl->SetItem( i, 3, "" );
         }
 		lctl->SetItem( i, 4, FormatObjectDescriptionForListView(files.FileDescription) );
-		MyListItemData *itemData = new MyListItemData( files.FileID, -1, files.PathFileID.IsNull() ? 0 : (long) files.PathFileID, files.FileName, files.FileExt, files.FileSize, files.DateTime, files.IsFolder(), wxEmptyString, files.FileDescription );
+		MyListItemData *itemData = new MyListItemData( files.FileID, -1, files.PathFileID.IsNull() ? 0 : (long) files.PathFileID, files.FileName, files.FileExt, itemSize, files.DateTime, files.IsFolder(), wxEmptyString, files.FileDescription );
 		lctl->SetItemPtrData( i, reinterpret_cast<wxUIntPtr>( itemData ) );
 
 		if( audioMetadataAvailable ) {
@@ -3479,6 +3503,29 @@ void CMainFrame::OnViewStatusBarClick( wxCommandEvent& event )
 	Fit();
 	SetSize(s);
 #endif
+}
+
+/*!
+ * wxEVT_COMMAND_MENU_SELECTED event handler for ID_VIEW_FOLDER_SIZES
+ */
+
+void CMainFrame::OnViewFolderSizesClick( wxCommandEvent& event )
+{
+	m_ShowFolderSizes = event.IsChecked();
+
+	// refresh the list so the new setting is visible immediately
+	if( m_CurrentView == cvPhysical )
+		ShowSelectedFolderFiles();
+}
+
+/*!
+ * wxEVT_UPDATE_UI event handler for ID_VIEW_FOLDER_SIZES
+ */
+
+void CMainFrame::OnViewFolderSizesUpdate( wxUpdateUIEvent& event )
+{
+	event.Enable( CBaseDB::GetDatabase() != NULL );
+	event.Check( m_ShowFolderSizes );
 }
 
 /*!

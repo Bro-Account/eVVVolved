@@ -40,6 +40,10 @@ below).
   catalog after every open. The flag is switched transparently while you edit
   and restored when the catalog is closed — see *Opening a catalog does not
   modify it* below.
+- Folder rows in the physical view show their full recursive size in the
+  Size column, and all sizes use binary units (KiB, MiB, GiB, TiB) instead of
+  the old "MB" label. The calculation can be switched off under
+  *View → Show folder sizes* if a folder tree is very large.
 
 **Windows:**
 

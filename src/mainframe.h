@@ -286,6 +286,12 @@ public:
     /// wxEVT_COMMAND_MENU_SELECTED event handler for ID_VIEW_STATUS_BAR
     void OnViewStatusBarClick( wxCommandEvent& event );
 
+    /// wxEVT_COMMAND_MENU_SELECTED event handler for ID_VIEW_FOLDER_SIZES
+    void OnViewFolderSizesClick( wxCommandEvent& event );
+
+    /// wxEVT_UPDATE_UI event handler for ID_VIEW_FOLDER_SIZES
+    void OnViewFolderSizesUpdate( wxUpdateUIEvent& event );
+
     /// wxEVT_COMMAND_MENU_SELECTED event handler for ID_MENU_OPENFILE_FOLDER
     void OnMenuOpenfileFolderClick( wxCommandEvent& event );
 
@@ -362,6 +368,7 @@ public:
         ID_VIEW_COLLAPSE = 10075,
         ID_VIEW_TOOLBAR = 10078,
         ID_VIEW_STATUS_BAR = 10084,
+        ID_VIEW_FOLDER_SIZES = 10098,
         ID_MENU_OPENFILE_FOLDER = 10021,
         ID_HELP_CONTENTS = 10085,
         ID_STATUSBAR1 = 10086,
@@ -494,6 +501,10 @@ private:
 
     // if true show alternate row colors in the list controls
     bool m_AlternateRowColors;
+
+    // if true show the recursive size of folders in the list control
+    bool m_ShowFolderSizes;
+
     int m_Appearance;  // 0 = system, 1 = light, 2 = dark
 
     // color of the folder icons in the trees/lists (settable in the options)

@@ -213,3 +213,41 @@ wxLongLong CPaths::FB_GetFullSize( long PathID )
     return (wxLongLong) size;
 }
 
+void CPaths::FB_GetChildrenFullSizes( long FatherID, std::map<long, wxLongLong>& sizes )
+{
+	bool inTransaction;
+	CFirebirdDB* db = (CFirebirdDB*) CBaseDB::GetDatabase();
+	inTransaction = db->TransactionIsOpened();
+	if( !inTransaction ) {
+		db->TransactionStart();
+	}
+	Statement st = StatementFactory( db->GetIBPPDB(), db->TransactionGetReference() );
+
+	// One recursive query computes the sizes of all direct subfolders at once.
+	// Calling SP_GET_PHYS_FOLDER_SIZE_RECURSE for each folder would scan the
+	// whole FILES table once per folder (there is no index on FILES.PATH_ID),
+	// which becomes unusable for folders with many subfolders.
+	st->Prepare(
+		"WITH RECURSIVE TREE (ROOT_ID, PATH_ID) AS ("
+		"  SELECT P.PATH_ID, P.PATH_ID FROM PATHS P WHERE P.FATHER_ID = ?"
+		"  UNION ALL"
+		"  SELECT T.ROOT_ID, P.PATH_ID FROM PATHS P JOIN TREE T ON P.FATHER_ID = T.PATH_ID"
+		")"
+		"SELECT T.ROOT_ID, CAST(COALESCE(SUM(F.FILE_SIZE), 0) AS BIGINT) "
+		"FROM TREE T JOIN FILES F ON F.PATH_ID = T.PATH_ID "
+		"GROUP BY T.ROOT_ID" );
+	st->Set( 1, (int32_t) FatherID );
+	st->Execute();
+
+	int64_t rootID, totalSize;
+	while( st->Fetch() ) {
+		st->Get( 1, rootID );
+		st->Get( 2, totalSize );
+		sizes[(long) rootID] = (wxLongLong) totalSize;
+	}
+
+	if( !inTransaction ) {
+		db->TransactionCommit();
+	}
+}
+

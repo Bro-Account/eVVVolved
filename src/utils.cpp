@@ -142,23 +142,30 @@ bool CUtils::MsgAskYes( wxString msg ){
 }
 
 wxString CUtils::HumanReadableFileSize( wxLongLong size ) {
-	wxString retVal;
+	// Binary multiples (IEC units): 1 KiB = 1024 bytes, 1 MiB = 1024 KiB...
+	// The suffixes make the 1024-based divisor explicit, since "MB" means
+	// 1,000,000 bytes. The value keeps one decimal so that large sizes remain
+	// readable (e.g. "56.9 GiB" instead of "58,311 MiB").
+	static const wxChar* const units[] = { wxT("KiB"), wxT("MiB"), wxT("GiB"), wxT("TiB"), wxT("PiB") };
+	const int lastUnit = (int) ( sizeof(units) / sizeof(units[0]) ) - 1;
 
-	if( size > 1024*1024 ) {
-		size = size / (1024*1024);
-		retVal = AddThousandsSeparators(size.ToString()) + wxT(" MB");
+	if( size < 1024 )
+		return AddThousandsSeparators( size.ToString() ) + wxT(" B");
+
+	double value = (double) size.GetValue();
+	int unit = -1;
+	while( value >= 1024.0 && unit < lastUnit ) {
+		value /= 1024.0;
+		unit++;
 	}
-	else {
-		if( size > 1024 ) {
-			size = size / 1024;
-			retVal = AddThousandsSeparators(size.ToString()) + wxT(" KB");
-		}
-		else {
-			retVal = AddThousandsSeparators(size.ToString());
-		}
+	// rounding to one decimal can push the value over the next unit, which
+	// would print "1024.0 MiB" instead of "1.0 GiB"
+	while( value >= 1023.95 && unit < lastUnit ) {
+		value /= 1024.0;
+		unit++;
 	}
 
-	return retVal;
+	return wxString::Format( wxT("%.1f"), value ) + wxT(" ") + units[unit];
 }
 
 

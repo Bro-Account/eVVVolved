@@ -86,3 +86,11 @@ wxLongLong CPaths::GetFullSize( long PathID ) {
 	return retVal;
 }
 
+void CPaths::GetChildrenFullSizes( long FatherID, std::map<long, wxLongLong>& sizes ) {
+	switch( DatabaseType ) {
+		case dbtFirebird:
+			FB_GetChildrenFullSizes( FatherID, sizes );
+			break;
+	}
+}
+

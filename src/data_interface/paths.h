@@ -24,6 +24,7 @@
 #define __PATHS_H__
 
 #include <wx/string.h>
+#include <map>
 
 #include "base_rec.h"
 
@@ -57,6 +58,10 @@ public:
     // compute the size of a path and its subfolders
     static wxLongLong GetFullSize( long PathID );
 
+    // compute the sizes of all direct subfolders of FatherID in one query
+    // (key: path id of the subfolder)
+    static void GetChildrenFullSizes( long FatherID, std::map<long, wxLongLong>& sizes );
+
 
 protected:
 
@@ -69,6 +74,7 @@ protected:
 	static wxString FB_GetFullPath( long PathID );
 	static void FB_UpdateDescription( long PathID, const wxString& descr );
     static wxLongLong FB_GetFullSize( long PathID );
+    static void FB_GetChildrenFullSizes( long FatherID, std::map<long, wxLongLong>& sizes );
 
 };
 
