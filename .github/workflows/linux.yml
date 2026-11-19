@@ -58,6 +58,9 @@ jobs:
           if ldd build/install/vvv | grep "not found"; then
             echo "vvv has unresolved libraries" >&2; exit 1
           fi
+          # the upgrade-script database must be ODS 13 (bytes 0d 80 at offset
+          # 18); an ODS 11 copy would break updates of older catalogs at runtime
+          test "$(od -An -tx1 -j18 -N2 build/install/vvv-struct-update.fdb | tr -d ' \n')" = "0d80"
           # the bundled Firebird 5 embedded engine works end-to-end
           export LD_LIBRARY_PATH="$PWD/build/install/firebird/lib"
           export FIREBIRD="$PWD/build/install/firebird"

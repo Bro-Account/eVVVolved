@@ -334,12 +334,11 @@ if( UNIX )
 #           PATTERN ".svn" EXCLUDE )
 
   # copy other files to the installation path
-  # the macOS build ships a Firebird 5 (ODS 13) copy; Windows/Linux keep the Firebird 2 one
-  if( APPLE )
-    set( STRUCT_UPDATE_DB ${PROJECT_SOURCE_DIR}/osx_specific/vvv-struct-update.fdb )
-  else( APPLE )
-    set( STRUCT_UPDATE_DB ${PROJECT_SOURCE_DIR}/vvv-struct-update.fdb )
-  endif( APPLE )
+  # The structure-update catalog must be ODS 13: the bundled Firebird 5 cannot
+  # open the old ODS 11 file, so upgrading a catalog (VVV 1.5 = schema 23)
+  # would fail. Windows and macOS already ship the converted copy; Linux used
+  # the original ODS 11 file until now.
+  set( STRUCT_UPDATE_DB ${PROJECT_SOURCE_DIR}/osx_specific/vvv-struct-update.fdb )
   install( FILES ${STRUCT_UPDATE_DB}
                  ${PROJECT_SOURCE_DIR}/VVV.fbk
                  ${PROJECT_SOURCE_DIR}/help/en/vvv.htb
