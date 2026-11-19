@@ -28,6 +28,7 @@
 #include <wx/config.h>
 #include <wx/dirdlg.h>
 #include <wx/filefn.h>
+#include <wx/utils.h>
 
 #include "audio_metadata.h"
 #include "data_interface/volumes.h"
@@ -36,6 +37,19 @@
 #include "data_interface/data_error.h"
 #include "data_interface/files_audio_metadata.h"
 
+
+// Records total and free space of the volume as a snapshot: the values are
+// taken while cataloging/updating because the drive may be offline or have a
+// different amount of free space when the catalog is browsed later.
+static void SetVolumeSpaceSnapshot( CVolumes& vol, const wxString& volumePath )
+{
+	wxLongLong total, free;
+
+	if( wxGetDiskSpace( volumePath, &total, &free ) && total.GetValue() > 0 && free.GetValue() >= 0 && free <= total ) {
+		vol.TotalSpace = total;
+		vol.FreeSpace = free;
+	}
+}
 
 CCatalogVolumeFunctions::CCatalogVolumeFunctions( wxStaticText *statText, bool catalogAudioMetadata )
 {
@@ -63,6 +77,7 @@ void CCatalogVolumeFunctions::CatalogVolume( wxString volumePath, wxString volum
 	vol.VolumeName = volumeName;
     vol.PhysicalPath = volumePath;
     vol.CatalogDate = wxDateTime::Now();
+    SetVolumeSpaceSnapshot( vol, volumePath );
 	try {
 		// this will throw a CDataErrorException::ecUnique exception if the volume name is already present
 		// to be catched by the caller
@@ -339,6 +354,7 @@ void CCatalogVolumeFunctions::UpdateVolume( wxString volumePath, long volumeID )
     CVolumes vol( volumeID );
     vol.PhysicalPath = volumePath;
     vol.LastUpdateDate = wxDateTime::Now();
+    SetVolumeSpaceSnapshot( vol, volumePath );
     vol.DbUpdate();
 
 	bool doCommit = true;

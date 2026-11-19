@@ -31,9 +31,12 @@ below).
   two-tone File-Explorer-like style, colored via Tools → Options → General
   (default amber `#FFD35C`, restorable with the *Default* button) and stored
   in the settings.
-- Catalog structure version stayed at 24, so catalogs created with the
-  modernized app still have the same schema — only the on-disk format (ODS)
-  changed with the engine.
+- Catalogs record the total and free space of each volume as a snapshot taken
+  when the volume is cataloged or updated (shown in the volume's properties
+  with that date). The catalog structure version is now 25, so catalogs from
+  1.5 and from earlier 2.0 builds are upgraded automatically on first open; a
+  volume cataloged before this change shows no space figures until it is
+  updated.
 - Local catalogs are stored **read-only**: opening, browsing or searching a
   catalog no longer writes to the file (byte-identical, same timestamp), so
   file-sync tools and incremental backups do not re-transfer a multi-GB

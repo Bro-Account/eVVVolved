@@ -53,6 +53,10 @@ void CVolumes::FB_DbInsert(void)
         sqlColumns += ", LAST_UPDATE_DATE";
         sqlValues += ", " + LastUpdateDate.Format( wxT("'%Y-%m-%d %H:%M:%S'") );
     }
+    if( HasSpaceInfo() ) {
+        sqlColumns += ", TOTAL_SPACE, FREE_SPACE";
+        sqlValues += ", " + TotalSpace.ToString() + ", " + FreeSpace.ToString();
+    }
     sql = "INSERT INTO VOLUMES (" + sqlColumns + ") VALUES (" + sqlValues + ")";
 
 	FB_ExecuteQueryNoReturn( sql );
@@ -87,6 +91,20 @@ void CVolumes::FB_DbUpdate(void)
     sql += ", LAST_UPDATE_DATE = ";
     if( LastUpdateDate.IsValid() ) {
         sql += LastUpdateDate.Format( wxT("'%Y-%m-%d %H:%M:%S'") );
+    }
+    else {
+        sql += "NULL";
+    }
+    sql += ", TOTAL_SPACE = ";
+    if( HasSpaceInfo() ) {
+        sql += TotalSpace.ToString();
+    }
+    else {
+        sql += "NULL";
+    }
+    sql += ", FREE_SPACE = ";
+    if( HasSpaceInfo() ) {
+        sql += FreeSpace.ToString();
     }
     else {
         sql += "NULL";
@@ -174,6 +192,16 @@ void CVolumes::FB_FetchRow(void) {
         else {
 		    FB_st->Get("LAST_UPDATE_DATE", ts);
 		    LastUpdateDate.Set( ts.Day(), (wxDateTime::Month) (wxDateTime::Jan + ts.Month() - 1), ts.Year(), ts.Hours(), ts.Minutes(), ts.Seconds() );
+        }
+        if( FB_st->IsNull("TOTAL_SPACE") || FB_st->IsNull("FREE_SPACE") ) {
+            TotalSpace = -1;
+            FreeSpace = -1;
+        }
+        else {
+            FB_st->Get("TOTAL_SPACE", tmp);
+            TotalSpace = (wxLongLong) tmp;
+            FB_st->Get("FREE_SPACE", tmp);
+            FreeSpace = (wxLongLong) tmp;
         }
 	}
 	else {

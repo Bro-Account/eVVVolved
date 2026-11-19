@@ -24,6 +24,7 @@
 #define __VOLUMES_H__
 
 #include <wx/string.h>
+#include <wx/longlong.h>
 
 #include "base_rec.h"
 
@@ -48,6 +49,12 @@ public:
 	wxString VolumeDescription;
     wxString PhysicalPath;
     wxDateTime CatalogDate, LastUpdateDate;
+    // total and free space of the volume in bytes, a snapshot taken while the
+    // volume was cataloged or last updated; -1 when they are not known (a
+    // volume cataloged by an older version, or a drive that was not available)
+    wxLongLong TotalSpace, FreeSpace;
+
+    bool HasSpaceInfo(void) const { return TotalSpace.GetValue() >= 0 && FreeSpace.GetValue() >= 0; }
 
 	// methods -----------------------------------
 

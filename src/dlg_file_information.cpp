@@ -36,6 +36,7 @@
 #include "files.h"
 #include "virtual_files.h"
 #include "virtual_paths.h"
+#include "volumes.h"
 #include "audio_metadata.h"
 #include "vvv.h"
 
@@ -384,6 +385,16 @@ void CFileInformationDialog::ShowFolderData()
             wxLongLong size = CPaths::GetFullSize( m_TreeItemData->GetPathID() );
             AddLCRow( _("Volume size"), CUtils::HumanReadableFileSize(size) + wxT(" (") + CUtils::AddThousandsSeparators(size.ToString()) + wxT(" ") + _("bytes") + wxT(")") );
 	        AddLCRow( _("Volume name"), m_TreeItemData->GetDesc() );
+
+            // total/free space recorded when the volume was cataloged or updated
+            CVolumes vol( m_TreeItemData->GetVolumeID() );
+            if( vol.HasSpaceInfo() ) {
+                wxLongLong usedSpace = vol.TotalSpace - vol.FreeSpace;
+                const int usedPercent = (int) ( usedSpace.ToDouble() * 100.0 / vol.TotalSpace.ToDouble() + 0.5 );
+                AddLCRow( _("Total space"), CUtils::HumanReadableFileSize(vol.TotalSpace) + wxT(" (") + CUtils::AddThousandsSeparators(vol.TotalSpace.ToString()) + wxT(" ") + _("bytes") + wxT(")") );
+                AddLCRow( _("Free space"), CUtils::HumanReadableFileSize(vol.FreeSpace) + wxT(" (") + CUtils::AddThousandsSeparators(vol.FreeSpace.ToString()) + wxT(" ") + _("bytes") + wxT(")") );
+                AddLCRow( _("Used space"), CUtils::HumanReadableFileSize(usedSpace) + wxT(" (") + CUtils::AddThousandsSeparators(usedSpace.ToString()) + wxT(" ") + _("bytes") + wxT(", ") + wxString::Format(wxT("%d"), usedPercent) + wxT(" %)") );
+            }
 
             // there is no way to get a list of the virtual paths that contain this volume
         }

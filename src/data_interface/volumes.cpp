@@ -28,6 +28,8 @@ CVolumes::CVolumes(void) {
     PhysicalPath = wxEmptyString;
     CatalogDate = wxInvalidDateTime;
     LastUpdateDate = wxInvalidDateTime;
+    TotalSpace = -1;
+    FreeSpace = -1;
 }
 
 CVolumes::CVolumes( long volumeID ) {
