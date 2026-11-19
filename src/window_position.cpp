@@ -21,6 +21,7 @@
 */
 
 #include <wx/gdicmn.h>
+#include <wx/math.h>
 #include "window_position.h"
 #include "utils.h"
 
@@ -37,6 +38,10 @@ void CWindowPosition::SavePosition( void ) {
 	window->GetPosition(&x, &y);
 	wxString path = wxT("/WindowsLayout/" + CUtils::long2string(window->GetId()));
 	pConfig->SetPath( path );
+	// the layout values are physical pixels: remember the display scaling they
+	// were measured at, so a restore at a different scaling converts the size
+	// (the same scheme the main frame uses)
+	pConfig->Write(wxT("Dpi"), window->GetDPIScaleFactor());
 	pConfig->Write(wxT("x"), (long) x);
 	pConfig->Write(wxT("y"), (long) y);
 	pConfig->Write(wxT("w"), (long) w);
@@ -61,6 +66,18 @@ void CWindowPosition::RestorePosition( void ) {
 		h = pConfig->Read(wxT("h"), -1);
 	
 	if( x == -1 || y == -1 || w == -1 || h == -1 ) return;
+
+	// the size was stored in physical pixels at the display scaling recorded
+	// in the "Dpi" value; legacy configurations have no value and are assumed
+	// to have been saved at 96 DPI. The position is not scaled: it is already
+	// a physical coordinate of the desktop. (The main frame does the same.)
+	const double currentDpi = window->GetDPIScaleFactor();
+	double savedDpi = pConfig->ReadDouble(wxT("Dpi"), 1.0);
+	if( savedDpi <= 0.0 )
+		savedDpi = 1.0;
+	const double layoutScale = currentDpi / savedDpi;
+	w = wxRound( w * layoutScale );
+	h = wxRound( h * layoutScale );
 
 	// check to see if the window is visible in the screen
 	if( !CheckCoordinates(x, y, w, h) ) {
