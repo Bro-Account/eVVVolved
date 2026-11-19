@@ -1457,6 +1457,7 @@ void CMainFrame::OnTreeControlSelChanged( wxTreeEvent& event )
 
 void CMainFrame::OnTreeControlVirtualSelChanged( wxTreeEvent& event )
 {
+	if( m_IgnoreTreeCtrlEvents ) return;
 	if( m_CurrentView != cvVirtual ) return;
 	
 	wxTreeItemId itemID = event.GetItem();
@@ -5033,6 +5034,12 @@ void CMainFrame::CreateMacToolbar()
 
 void CMainFrame::OnCloseWindow( wxCloseEvent& event )
 {
+	// Deleting the tree items makes the control send selection-change events
+	// for the nodes it removes. Without this guard the list would be rebuilt
+	// for every volume while the window is closing - with folder sizes
+	// enabled that means computing the size of every volume again.
+	m_IgnoreTreeCtrlEvents = true;
+
 	// empty the tree control (the default code is very slow so I need to do this manually)
 	m_treePhysicalCtl->Freeze();
 	m_treePhysicalCtl->DeleteAllItems();
