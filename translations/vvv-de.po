@@ -131,7 +131,7 @@ msgstr "(Standardsprache verwenden)"
 #: Z:\Sviluppo_C++\VVV\src/chooselang.cpp:96
 #: Z:\Sviluppo_C++\VVV\src/mainframe.cpp:2479
 msgid "Bulgarian"
-msgstr ""
+msgstr "Bulgarisch"
 
 #: Z:\Sviluppo_C++\VVV\src/chooselang.cpp:97
 #: Z:\Sviluppo_C++\VVV\src/mainframe.cpp:2463
@@ -141,93 +141,93 @@ msgstr ""
 #: Z:\Sviluppo_C++\VVV\src/chooselang.cpp:98
 #: Z:\Sviluppo_C++\VVV\src/mainframe.cpp:2474
 msgid "Croatian"
-msgstr ""
+msgstr "Kroatisch"
 
 #: Z:\Sviluppo_C++\VVV\src/chooselang.cpp:99
 #: Z:\Sviluppo_C++\VVV\src/mainframe.cpp:2469
 msgid "Czech"
-msgstr ""
+msgstr "Tschechisch"
 
 #: Z:\Sviluppo_C++\VVV\src/chooselang.cpp:100
 #: Z:\Sviluppo_C++\VVV\src/mainframe.cpp:2480
 msgid "Dutch"
-msgstr ""
+msgstr "Niederländisch"
 
 #: Z:\Sviluppo_C++\VVV\src/chooselang.cpp:101
 msgid "English"
-msgstr ""
+msgstr "Englisch"
 
 #: Z:\Sviluppo_C++\VVV\src/chooselang.cpp:102
 #: Z:\Sviluppo_C++\VVV\src/mainframe.cpp:2466
 msgid "French"
-msgstr ""
+msgstr "Französisch"
 
 #: Z:\Sviluppo_C++\VVV\src/chooselang.cpp:103
 #: Z:\Sviluppo_C++\VVV\src/mainframe.cpp:2467
 msgid "German"
-msgstr ""
+msgstr "Deutsch"
 
 #: Z:\Sviluppo_C++\VVV\src/chooselang.cpp:104
 #: Z:\Sviluppo_C++\VVV\src/mainframe.cpp:2468
 #: Z:\Sviluppo_C++\VVV\src/mainframe.cpp:2471
 msgid "Hungarian"
-msgstr ""
+msgstr "Ungarisch"
 
 #: Z:\Sviluppo_C++\VVV\src/chooselang.cpp:105
 #: Z:\Sviluppo_C++\VVV\src/mainframe.cpp:2477
 msgid "Italian"
-msgstr ""
+msgstr "Italienisch"
 
 #: Z:\Sviluppo_C++\VVV\src/chooselang.cpp:106
 #: Z:\Sviluppo_C++\VVV\src/mainframe.cpp:2476
 msgid "Japanese"
-msgstr ""
+msgstr "Japanisch"
 
 #: Z:\Sviluppo_C++\VVV\src/chooselang.cpp:107
 #: Z:\Sviluppo_C++\VVV\src/mainframe.cpp:2470
 msgid "Polish"
-msgstr ""
+msgstr "Polnisch"
 
 #: Z:\Sviluppo_C++\VVV\src/chooselang.cpp:108
 #: Z:\Sviluppo_C++\VVV\src/mainframe.cpp:2464
 msgid "Portuguese"
-msgstr ""
+msgstr "Portugiesisch"
 
 #: Z:\Sviluppo_C++\VVV\src/chooselang.cpp:109
 #: Z:\Sviluppo_C++\VVV\src/mainframe.cpp:2478
 msgid "Romanian"
-msgstr ""
+msgstr "Rumänisch"
 
 #: Z:\Sviluppo_C++\VVV\src/chooselang.cpp:110
 #: Z:\Sviluppo_C++\VVV\src/mainframe.cpp:2472
 msgid "Russian"
-msgstr ""
+msgstr "Russisch"
 
 #: Z:\Sviluppo_C++\VVV\src/chooselang.cpp:111
 msgid "Serbian (cyrillic)"
-msgstr ""
+msgstr "Serbisch (kyrillisch)"
 
 #: Z:\Sviluppo_C++\VVV\src/chooselang.cpp:112
 msgid "Serbian (latin)"
-msgstr ""
+msgstr "Serbisch (lateinisch)"
 
 #: Z:\Sviluppo_C++\VVV\src/chooselang.cpp:113
 #: Z:\Sviluppo_C++\VVV\src/mainframe.cpp:2465
 msgid "Spanish"
-msgstr ""
+msgstr "Spanisch"
 
 #: Z:\Sviluppo_C++\VVV\src/chooselang.cpp:114
 #: Z:\Sviluppo_C++\VVV\src/mainframe.cpp:2473
 msgid "Ukrainian"
-msgstr ""
+msgstr "Ukrainisch"
 
 #: Z:\Sviluppo_C++\VVV\src/chooselang.cpp:123
 msgid "Select your preferred language"
-msgstr ""
+msgstr "Wählen Sie Ihre bevorzugte Sprache"
 
 #: Z:\Sviluppo_C++\VVV\src/chooselang.cpp:124
 msgid "Language selection"
-msgstr ""
+msgstr "Sprachauswahl"
 
 #: Z:\Sviluppo_C++\VVV\src/chooselang.cpp:138
 msgid "You must restart the program for this change to take effect."
@@ -973,7 +973,7 @@ msgstr ""
 
 #: Z:\Sviluppo_C++\VVV\src/mainframe.cpp:2475
 msgid "Serbian"
-msgstr ""
+msgstr "Serbisch"
 
 #: Z:\Sviluppo_C++\VVV\src/mainframe.cpp:2496
 msgid "New catalog"
@@ -1298,7 +1298,7 @@ msgstr "Sound abspielen bei Aufgaben, die länger dauern als (Sekunden):"
 
 #: Z:\Sviluppo_C++\VVV\src/settings.cpp:193
 msgid "Change language"
-msgstr ""
+msgstr "Sprache wechseln"
 
 #: Z:\Sviluppo_C++\VVV\src/settings.cpp:196
 msgid "General"
@@ -1489,3 +1489,166 @@ msgstr "Datenträgername fehlt"
 
 msgid "Enter the new forder name"
 msgstr "Geben Sie den neuen Ordnernamen ein"
+
+msgid "\n\nDelete or move that file, then repeat the command."
+msgstr "\n\nLöschen oder verschieben Sie diese Datei und wiederholen Sie danach das Kommando."
+msgid "\n\nDo you want to convert it into a new catalog now? The original file is not modified.\n\nThe first conversion downloads VVV 1.5 from SourceForge (about 30 MB) to read the old format."
+msgstr "\n\nMöchten Sie ihn jetzt in einen neuen Katalog konvertieren? Die ursprüngliche Datei wird nicht verändert.\n\nBei der ersten Konvertierung wird VVV 1.5 von SourceForge heruntergeladen (etwa 30 MB), um das alte Format zu lesen."
+msgid "\n\nDo you want to convert it to the new format now?\n\nThe converted catalog will replace the old one in place. The original catalog is kept unchanged as\n"
+msgstr "\n\nMöchten Sie ihn jetzt in das neue Format konvertieren?\n\nDer konvertierte Katalog ersetzt den alten an derselben Stelle. Der ursprüngliche Katalog bleibt unverändert als\n"
+msgid "\n\nHow to convert it: https://github.com/Bro-Account/eVVVolved\nThe original file is not modified."
+msgstr "\n\nAnleitung zum Konvertieren: https://github.com/Bro-Account/eVVVolved\nDie ursprüngliche Datei wird nicht verändert."
+msgid "\n\nIt is opened read-write, so changes may be written to the file while it is used."
+msgstr "\n\nEr ist mit Schreibrechten geöffnet, sodass während der Nutzung Änderungen in die Datei geschrieben werden können."
+msgid "\n\nIt may be in use by another program, for example another copy of VVV. Close that program and try again."
+msgstr "\n\nMöglicherweise wird er von einem anderen Programm verwendet, zum Beispiel einer weiteren Kopie von VVV. Schließen Sie dieses Programm und versuchen Sie es erneut."
+msgid "\n\nNothing has been removed: the catalog file is unchanged."
+msgstr "\n\nEs wurde nichts entfernt: die Katalogdatei ist unverändert."
+msgid "\n\nPlease rename it by hand, then reopen the catalog."
+msgstr "\n\nBitte benennen Sie ihn von Hand um und öffnen Sie den Katalog danach erneut."
+msgid "\n\nThe backup copy taken before the compaction is at:\n"
+msgstr "\n\nDie vor der Komprimierung erstellte Sicherungskopie befindet sich unter:\n"
+msgid "\n\nThe old catalog has been kept as:\n"
+msgstr "\n\nDer alte Katalog wurde aufbewahrt unter:\n"
+msgid "\n\nThe old catalog has been left in place, unchanged."
+msgstr "\n\nDer alte Katalog liegt unverändert an seiner Stelle."
+msgid "\n\nThe original catalog has been left in place, unchanged."
+msgstr "\n\nDer ursprüngliche Katalog liegt unverändert an seiner Stelle."
+msgid "\n\nThe pre-compaction catalog has been kept as:\n"
+msgstr "\n\nDer Katalog vor der Komprimierung wurde aufbewahrt unter:\n"
+msgid "\n\nUnless the program was installed incompletely, convert the catalog with the standalone converter, or on a machine where an installation with the helper folder is available."
+msgstr "\n\nSofern das Programm nicht unvollständig installiert wurde, konvertieren Sie den Katalog mit dem eigenständigen Konverter oder auf einem Rechner, auf dem eine Installation mit dem Helfer-Ordner verfügbar ist."
+msgid "\n\nand can still be opened with VVV 1.5."
+msgstr "\n\nund kann weiterhin mit VVV 1.5 geöffnet werden."
+msgid "\nNew catalog size: "
+msgstr "\nGröße des neuen Katalogs: "
+msgid "\nso it can still be opened with VVV 1.5."
+msgstr "\nsodass er weiterhin mit VVV 1.5 geöffnet werden kann."
+msgid " Its database engine is for Intel Macs, so this Mac needs Rosetta."
+msgstr " Dessen Datenbank-Engine ist für Intel-Macs, dieser Mac benötigt daher Rosetta."
+msgid "&Compact Database..."
+msgstr "Katalog &komprimieren..."
+msgid "An error happened while parsing the command line"
+msgstr "Beim Auswerten der Befehlszeile ist ein Fehler aufgetreten"
+msgid "An unexpected error has occurred."
+msgstr "Ein unerwarteter Fehler ist aufgetreten."
+msgid "Appearance follows the system. Click to switch to light."
+msgstr "Das Erscheinungsbild folgt dem System. Klicken, um zu hell zu wechseln."
+msgid "Appearance:"
+msgstr "Erscheinungsbild:"
+msgid "Apple Silicon port"
+msgstr "Apple-Silicon-Portierung"
+msgid "Backing up the catalog, please wait..."
+msgstr "Katalog wird gesichert, bitte warten..."
+msgid "Backing up the old catalog, please wait..."
+msgstr "Alter Katalog wird gesichert, bitte warten..."
+msgid "Closing the catalog, please wait..."
+msgstr "Katalog wird geschlossen, bitte warten..."
+msgid "Compacting the catalog"
+msgstr "Katalog wird komprimiert"
+msgid "Compaction completed.\n\nOld catalog size: "
+msgstr "Komprimierung abgeschlossen.\n\nGröße des alten Katalogs: "
+msgid "Compaction failed. The original catalog has been left in place, unchanged.\n\n"
+msgstr "Komprimierung fehlgeschlagen. Der ursprüngliche Katalog liegt unverändert an seiner Stelle.\n\n"
+msgid "Compaction failed: the row counts of the rebuilt catalog do not match the original."
+msgstr "Komprimierung fehlgeschlagen: die Zeilenanzahlen des neu aufgebauten Katalogs stimmen nicht mit dem Original überein."
+msgid "Conversion completed.\n\nOld catalog size: "
+msgstr "Konvertierung abgeschlossen.\n\nGröße des alten Katalogs: "
+msgid "Conversion failed. The original catalog has been left in place, unchanged.\n\n"
+msgstr "Konvertierung fehlgeschlagen. Der ursprüngliche Katalog liegt unverändert an seiner Stelle.\n\n"
+msgid "Conversion failed: the row counts of the rebuilt catalog do not match the old one. Nothing was replaced."
+msgstr "Konvertierung fehlgeschlagen: die Zeilenanzahlen des neu aufgebauten Katalogs stimmen nicht mit dem alten überein. Es wurde nichts ersetzt."
+msgid "Converting the catalog"
+msgstr "Katalog wird konvertiert"
+msgid "Converting the catalog, please wait..."
+msgstr "Katalog wird konvertiert, bitte warten..."
+msgid "Copyright (C) 2007-2026 The VVV Team"
+msgstr "Copyright (C) 2007-2026 Das VVV-Team"
+msgid "Dark"
+msgstr "Dunkel"
+msgid "Dark appearance. Click to follow the system setting."
+msgstr "Dunkles Erscheinungsbild. Klicken, um der Systemeinstellung zu folgen."
+msgid "Default"
+msgstr "Standard"
+msgid "Folder icon color:"
+msgstr "Farbe der Ordnersymbole:"
+msgid "Free space"
+msgstr "Freier Speicherplatz"
+msgid "Greek"
+msgstr "Griechisch"
+msgid "Light"
+msgstr "Hell"
+msgid "Light appearance. Click to switch to dark."
+msgstr "Helles Erscheinungsbild. Klicken, um zu dunkel zu wechseln."
+msgid "Opening the catalog, please wait..."
+msgstr "Katalog wird geöffnet, bitte warten..."
+msgid "Rebuilding the catalog, please wait..."
+msgstr "Katalog wird neu aufgebaut, bitte warten..."
+msgid "Reopening the catalog, please wait..."
+msgstr "Katalog wird erneut geöffnet, bitte warten..."
+msgid "Restores the default folder color (amber, like the Windows 11 File Explorer folders)"
+msgstr "Stellt die Standardfarbe der Ordner wieder her (Bernstein, wie die Ordner im Windows-11-Datei-Explorer)"
+msgid "Same as the system"
+msgstr "Wie das System"
+msgid "Show folder &sizes"
+msgstr "Ordner&größen anzeigen"
+msgid "Simplified Chinese"
+msgstr "Vereinfachtes Chinesisch"
+msgid "The catalog could not be marked read-only:\n\n"
+msgstr "Der Katalog konnte nicht als schreibgeschützt markiert werden:\n\n"
+msgid "The catalog could not be opened:\n\n"
+msgstr "Der Katalog konnte nicht geöffnet werden:\n\n"
+msgid "The catalog has been compacted but the program was unable to reopen it.\n\nThe catalog is at:\n"
+msgstr "Der Katalog wurde komprimiert, aber das Programm konnte ihn nicht erneut öffnen.\n\nDer Katalog befindet sich unter:\n"
+msgid "The catalog has been converted but the program was unable to reopen it.\n\nThe converted catalog is at:\n"
+msgstr "Der Katalog wurde konvertiert, aber das Programm konnte ihn nicht erneut öffnen.\n\nDer konvertierte Katalog befindet sich unter:\n"
+msgid "The command line asks for a volume update but the catalog name is missing"
+msgstr "Die Befehlszeile verlangt eine Datenträger-Aktualisierung, aber der Katalogname fehlt"
+msgid "The command line asks for a volume update but the volume name is missing"
+msgstr "Die Befehlszeile verlangt eine Datenträger-Aktualisierung, aber der Datenträgername fehlt"
+msgid "The command line asks for a volume update but the volume path is missing"
+msgstr "Die Befehlszeile verlangt eine Datenträger-Aktualisierung, aber der Datenträgerpfad fehlt"
+msgid "This catalog has been created with VVV 1.5 or older and cannot be opened by this version:\n\n"
+msgstr "Dieser Katalog wurde mit VVV 1.5 oder älter erstellt und kann von dieser Version nicht geöffnet werden:\n\n"
+msgid "This catalog has been created with VVV 1.5 or older and must be converted before this version can open it:\n\n"
+msgstr "Dieser Katalog wurde mit VVV 1.5 oder älter erstellt und muss konvertiert werden, bevor diese Version ihn öffnen kann:\n\n"
+msgid "Total space"
+msgstr "Gesamtspeicherplatz"
+msgid "Traditional Chinese"
+msgstr "Traditionelles Chinesisch"
+msgid "Unable to backup the old catalog. The original file has not been modified.\n\n"
+msgstr "Der alte Katalog konnte nicht gesichert werden. Die ursprüngliche Datei wurde nicht verändert.\n\n"
+msgid "Unable to compact.\n\nYou are connecting to a database server on another computer. You must execute this command on the server to be able to compact a catalog."
+msgstr "Komprimieren nicht möglich.\n\nSie sind mit einem Datenbankserver auf einem anderen Rechner verbunden. Dieses Kommando muss auf dem Server ausgeführt werden, um einen Katalog komprimieren zu können."
+msgid "Unable to compact: a backup of a previous compaction is still present:\n\n"
+msgstr "Komprimieren nicht möglich: eine Sicherung einer früheren Komprimierung ist noch vorhanden:\n\n"
+msgid "Unable to compact: not enough free space in %s.\n\nAbout %s are needed, %s are available."
+msgstr "Komprimieren nicht möglich: nicht genug freier Speicherplatz auf %s.\n\nEs werden etwa %s benötigt, %s sind verfügbar."
+msgid "Unable to convert the catalog. The original file has not been modified.\n\n"
+msgstr "Der Katalog konnte nicht konvertiert werden. Die ursprüngliche Datei wurde nicht verändert.\n\n"
+msgid "Unable to convert: not enough free space in %s.\n\nAbout %s are needed, %s are available."
+msgstr "Konvertieren nicht möglich: nicht genug freier Speicherplatz auf %s.\n\nEs werden etwa %s benötigt, %s sind verfügbar."
+msgid "Unable to convert: the conversion helper is missing in the program folder:\n\n"
+msgstr "Konvertieren nicht möglich: der Konvertierungs-Helfer fehlt im Programmordner:\n\n"
+msgid "Unable to create the temporary folder:\n\n"
+msgstr "Der temporäre Ordner konnte nicht erstellt werden:\n\n"
+msgid "Unable to remove the temporary folder:\n\n"
+msgstr "Der temporäre Ordner konnte nicht entfernt werden:\n\n"
+msgid "Unable to rename the catalog file to:\n\n"
+msgstr "Die Katalogdatei konnte nicht umbenannt werden in:\n\n"
+msgid "Unable to rename the compacted catalog into place:\n\n"
+msgstr "Der komprimierte Katalog konnte nicht an seinen Platz verschoben werden:\n\n"
+msgid "Unable to rename the converted catalog into place:\n\n"
+msgstr "Der konvertierte Katalog konnte nicht an seinen Platz verschoben werden:\n\n"
+msgid "Unable to rename the old catalog to:\n\n"
+msgstr "Der alte Katalog konnte nicht umbenannt werden in:\n\n"
+msgid "Unable to return the old catalog into place after a failed rename:\n\n"
+msgstr "Der alte Katalog konnte nach einer fehlgeschlagenen Umbenennung nicht wieder an seinen Platz verschoben werden:\n\n"
+msgid "Unable to return the original catalog into place after a failed rename:\n\n"
+msgstr "Der ursprüngliche Katalog konnte nach einer fehlgeschlagenen Umbenennung nicht wieder an seinen Platz verschoben werden:\n\n"
+msgid "Used space"
+msgstr "Belegter Speicherplatz"
+msgid "Verifying the catalog, please wait..."
+msgstr "Katalog wird überprüft, bitte warten..."
+msgid "Windows 64-bit continuation (VVV 2.0)"
+msgstr "Windows-64-Bit-Fortsetzung (VVV 2.0)"
