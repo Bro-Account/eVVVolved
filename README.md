@@ -164,6 +164,23 @@ and a default-checked task removes the old 32-bit program folder from
 `Program Files (x86)` — its files are program files only (its uninstaller is
 deliberately not run, since it would delete the shared user settings).
 
+For an unattended install, capture the wizard choices once and replay them:
+
+```powershell
+# save the chosen options during a normal install
+.\VVV-2.0.0.0-Setup.exe /SAVEINF="C:\temp\vvv-setup.inf"
+
+# unattended install with those options
+.\VVV-2.0.0.0-Setup.exe /VERYSILENT /SUPPRESSMSGBOXES /NORESTART `
+    /LOADINF="C:\temp\vvv-setup.inf" /LOG="C:\temp\vvv-install.log"
+```
+
+`/SILENT` shows a progress window, `/VERYSILENT` shows none. The installer
+targets `Program Files`, so the UAC prompt still appears unless the command
+runs elevated. To skip individual tasks without an INF file, pass
+`/TASKS="!desktopicon"` (and `!deleteold` to keep an old 1.5 folder). The
+uninstaller accepts the same silent switches.
+
 ## Building on macOS
 
 Requirements: macOS on Apple Silicon, Xcode command line tools, Homebrew.
@@ -179,6 +196,21 @@ cmake --install build                      # assembles and checks build/install/
 `cmake --install` fails if any library in the bundle still points outside the
 bundle or macOS. The macOS release/signing workflow lives in
 `scripts/release-macos.sh`.
+
+## Command-line mode
+
+`vvv.exe` can update a volume without opening the GUI, which is useful for
+scheduled re-scans:
+
+```powershell
+vvv.exe "D:\Catalogs\Storage.vvv" -u -v "Storage" -vp "R:\"
+```
+
+`-v` is the volume name as stored in the catalog, `-vp` the path to scan.
+`-s <file.ini>` uses a portable settings file instead of the registry, and
+`-d <folder>` sets the default folder for new catalogs. The process exits
+with 0 on success and writes errors to `stderr`. There is currently no
+command-line mode for creating a catalog or adding a volume.
 
 ## Known issues
 
